@@ -1,16 +1,27 @@
 <script lang="ts">
 	import '../../app.css';
+	import * as m from '$lib/paraglide/messages';
+	import { localePath } from '$lib/i18n';
 	import type { Snippet } from 'svelte';
+	import type { LayoutData } from './$types';
 
-	let { children }: { children: Snippet } = $props();
+	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 </script>
 
 <div class="min-h-screen flex flex-col">
 	<header class="border-b border-border">
 		<div class="container mx-auto px-4 py-4 flex items-center justify-between">
-			<a href="/" class="text-xl font-bold">Khao Pad</a>
-			<nav class="flex gap-4 text-sm">
-				<a href="/th/blog" class="hover:text-primary">Blog</a>
+			<a href="/" class="text-xl font-bold">{m.site_name()}</a>
+			<nav class="flex items-center gap-4 text-sm">
+				<a href={localePath(data.locale as 'th' | 'en', '/blog')} class="hover:text-primary">
+					{m.nav_blog()}
+				</a>
+				<a
+					href={localePath(data.locale === 'th' ? 'en' : 'th', '/')}
+					class="px-2 py-1 border border-border rounded text-xs hover:bg-muted"
+				>
+					{m.lang_switch()}
+				</a>
 			</nav>
 		</div>
 	</header>
@@ -20,6 +31,6 @@
 	</main>
 
 	<footer class="border-t border-border py-8 text-center text-sm text-muted-foreground">
-		<p>&copy; {new Date().getFullYear()} Khao Pad. Built with SvelteKit.</p>
+		<p>{m.footer_copyright({ year: new Date().getFullYear().toString() })}</p>
 	</footer>
 </div>

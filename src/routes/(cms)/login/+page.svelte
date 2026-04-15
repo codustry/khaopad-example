@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as m from '$lib/paraglide/messages';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -36,14 +37,14 @@
 </script>
 
 <svelte:head>
-	<title>Login — Khao Pad CMS</title>
+	<title>{m.cms_sign_in()} — {m.cms_app_name()}</title>
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center">
 	<div class="w-full max-w-sm">
 		<div class="text-center mb-8">
-			<h1 class="text-2xl font-bold">🍳 Khao Pad CMS</h1>
-			<p class="text-muted-foreground text-sm mt-2">Sign in to manage content</p>
+			<h1 class="text-2xl font-bold">{m.cms_app_name()}</h1>
+			<p class="text-muted-foreground text-sm mt-2">{m.cms_sign_in_description()}</p>
 		</div>
 
 		<form onsubmit={handleLogin} class="space-y-4">
@@ -54,7 +55,7 @@
 			{/if}
 
 			<div>
-				<label for="email" class="block text-sm font-medium mb-1">Email</label>
+				<label for="email" class="block text-sm font-medium mb-1">{m.cms_email()}</label>
 				<input
 					id="email"
 					type="email"
@@ -66,7 +67,7 @@
 			</div>
 
 			<div>
-				<label for="password" class="block text-sm font-medium mb-1">Password</label>
+				<label for="password" class="block text-sm font-medium mb-1">{m.cms_password()}</label>
 				<input
 					id="password"
 					type="password"
@@ -81,7 +82,7 @@
 				disabled={loading}
 				class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:opacity-90 disabled:opacity-50"
 			>
-				{loading ? 'Signing in...' : 'Sign in'}
+				{loading ? m.cms_signing_in() : m.cms_sign_in()}
 			</button>
 		</form>
 	</div>

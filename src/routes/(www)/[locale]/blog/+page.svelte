@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as m from '$lib/paraglide/messages';
 	import { formatDate } from '$lib/utils';
 	import type { PageData } from './$types';
 
@@ -6,14 +7,14 @@
 </script>
 
 <svelte:head>
-	<title>Blog — Khao Pad</title>
+	<title>{m.blog_title()} — {m.site_name()}</title>
 </svelte:head>
 
 <section class="container mx-auto px-4 py-12">
-	<h1 class="text-3xl font-bold mb-8">Blog</h1>
+	<h1 class="text-3xl font-bold mb-8">{m.blog_title()}</h1>
 
 	{#if data.articles.items.length === 0}
-		<p class="text-muted-foreground">No articles yet.</p>
+		<p class="text-muted-foreground">{m.blog_no_articles()}</p>
 	{:else}
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#each data.articles.items as article}

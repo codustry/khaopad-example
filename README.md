@@ -23,6 +23,7 @@ Khao Pad fills the gap: **start lightweight, scale when needed, stay on Cloudfla
 - **Pluggable storage** — D1 mode now, GitHub file-based mode later
 - **Cloudflare-native** — D1 database, R2 media, KV caching, Workers deployment
 - **Better Auth** — email/password auth with role-based access (Super Admin, Admin, Editor, Author)
+- **Paraglide JS** — compile-time i18n with type-safe translations via inlang
 - **SvelteKit + Tailwind + shadcn/ui** — modern, fast, beautiful
 
 ## Architecture
@@ -55,6 +56,7 @@ Khao Pad fills the gap: **start lightweight, scale when needed, stay on Cloudfla
 - [shadcn/ui (svelte)](https://shadcn-svelte.com) — Component library
 - [Drizzle ORM](https://orm.drizzle.team) — Type-safe SQL for D1
 - [Better Auth](https://better-auth.com) — Authentication
+- [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) — Compile-time i18n (inlang)
 - [Cloudflare Workers](https://workers.cloudflare.com) — Edge deployment
 - [Cloudflare D1](https://developers.cloudflare.com/d1/) — SQLite database
 - [Cloudflare R2](https://developers.cloudflare.com/r2/) — Object storage

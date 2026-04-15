@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../../app.css';
+	import * as m from '$lib/paraglide/messages';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
@@ -13,27 +14,27 @@
 		<!-- Sidebar -->
 		<aside class="w-64 border-r border-border bg-sidebar-background p-4 flex flex-col">
 			<div class="mb-8">
-				<h1 class="text-lg font-bold">🍳 Khao Pad CMS</h1>
+				<h1 class="text-lg font-bold">{m.cms_app_name()}</h1>
 			</div>
 			<nav class="flex-1 space-y-1">
 				<a href="/dashboard" class="block px-3 py-2 rounded-md hover:bg-sidebar-accent text-sm">
-					Dashboard
+					{m.cms_dashboard()}
 				</a>
 				<a href="/articles" class="block px-3 py-2 rounded-md hover:bg-sidebar-accent text-sm">
-					Articles
+					{m.cms_articles()}
 				</a>
 				<a href="/media" class="block px-3 py-2 rounded-md hover:bg-sidebar-accent text-sm">
-					Media
+					{m.cms_media()}
 				</a>
 				<a href="/categories" class="block px-3 py-2 rounded-md hover:bg-sidebar-accent text-sm">
-					Categories
+					{m.cms_categories()}
 				</a>
 				{#if data.user.role === 'super_admin' || data.user.role === 'admin'}
 					<a href="/users" class="block px-3 py-2 rounded-md hover:bg-sidebar-accent text-sm">
-						Users
+						{m.cms_users()}
 					</a>
 					<a href="/settings" class="block px-3 py-2 rounded-md hover:bg-sidebar-accent text-sm">
-						Settings
+						{m.cms_settings()}
 					</a>
 				{/if}
 			</nav>
