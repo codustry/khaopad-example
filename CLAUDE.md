@@ -51,9 +51,19 @@ pnpm deploy           # Build + deploy to Cloudflare Workers
 
 ## Content model
 
-- Articles have shared slug/media across languages, separate markdown per locale (TH/EN)
+- Default locale is **English (`en`)**. Thai (`th`) is the secondary locale.
+- Articles have shared slug/media across languages, separate markdown per locale (EN/TH)
 - Localizations stored in separate tables (`article_localizations`, `category_localizations`, etc.)
 - Roles: super_admin > admin > editor > author
+
+### Slug rules (important)
+
+- Slugs are **always English-only ASCII** (`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+- Slugs are **shared across all locales** — there is no per-language slug
+- Slugs are **auto-generated** from the English title via `slugify()` in `$lib/utils`
+- The English (`en`) localization is **required** when creating an article — the slug is derived from `localizations.en.title`
+- Non-ASCII characters are stripped, not transliterated. A Thai-only title cannot produce a slug; the user must supply an English title (or an explicit `slug`)
+- Admins may rename the slug via `updateArticle({ slug })`, but it is then re-normalized through `slugify()` before being stored
 
 ## Important patterns
 

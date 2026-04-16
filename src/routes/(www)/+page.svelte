@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
-	import { localePath } from '$lib/i18n';
+	import { localePath, toLocale } from '$lib/i18n';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,7 +18,7 @@
 	</p>
 	<div class="flex gap-4 justify-center">
 		<a
-			href={localePath(data.locale as 'th' | 'en', '/blog')}
+			href={localePath(toLocale(data.locale), '/blog')}
 			class="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
 		>
 			{m.nav_blog()}

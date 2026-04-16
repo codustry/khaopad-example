@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../../app.css';
 	import * as m from '$lib/paraglide/messages';
-	import { localePath } from '$lib/i18n';
+	import { localePath, toLocale, getAlternateLocale } from '$lib/i18n';
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
@@ -13,11 +13,11 @@
 		<div class="container mx-auto px-4 py-4 flex items-center justify-between">
 			<a href="/" class="text-xl font-bold">{m.site_name()}</a>
 			<nav class="flex items-center gap-4 text-sm">
-				<a href={localePath(data.locale as 'th' | 'en', '/blog')} class="hover:text-primary">
+				<a href={localePath(toLocale(data.locale), '/blog')} class="hover:text-primary">
 					{m.nav_blog()}
 				</a>
 				<a
-					href={localePath(data.locale === 'th' ? 'en' : 'th', '/')}
+					href={localePath(getAlternateLocale(toLocale(data.locale)), '/')}
 					class="px-2 py-1 border border-border rounded text-xs hover:bg-muted"
 				>
 					{m.lang_switch()}

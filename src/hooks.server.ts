@@ -39,7 +39,7 @@ const bindingsHook: Handle = async ({ event, resolve }) => {
 	const env = event.platform?.env;
 	if (!env) {
 		// Local dev without wrangler — provide defaults
-		event.locals.locale = 'th';
+		event.locals.locale = 'en';
 		return resolve(event);
 	}
 
@@ -54,8 +54,8 @@ const bindingsHook: Handle = async ({ event, resolve }) => {
 	event.locals.media = new R2MediaService(env.DB, env.MEDIA_BUCKET, mediaBaseUrl);
 
 	// Locale detection (from URL path or Accept-Language)
-	const supportedLocales = (env.SUPPORTED_LOCALES ?? 'th,en').split(',');
-	const defaultLocale = env.DEFAULT_LOCALE ?? 'th';
+	const supportedLocales = (env.SUPPORTED_LOCALES ?? 'en,th').split(',');
+	const defaultLocale = env.DEFAULT_LOCALE ?? 'en';
 	const pathLocale = event.url.pathname.split('/')[1];
 	event.locals.locale = supportedLocales.includes(pathLocale) ? pathLocale : defaultLocale;
 

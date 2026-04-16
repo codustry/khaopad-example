@@ -115,14 +115,16 @@ Then access:
 
 ```
 Article (shared)
-├── id, slug, status, coverMedia, category, tags, author
-├── Localization (TH)
+├── id, slug (English ASCII), status, coverMedia, category, tags, author
+├── Localization (EN) ← required, slug is derived from this title
 │   └── title, excerpt, body (markdown), SEO fields
-└── Localization (EN)
+└── Localization (TH)
     └── title, excerpt, body (markdown), SEO fields
 ```
 
 Articles share the same slug and media across languages. Only the text content differs per locale.
+
+**Slugs are always English ASCII** (`^[a-z0-9]+(?:-[a-z0-9]+)*$`) and auto-generated from the English title via `slugify()`. The same slug serves every locale — there is no per-language slug.
 
 ## Storage Modes
 
@@ -149,7 +151,7 @@ Both modes share the same `ContentProvider` interface — your CMS code doesn't 
 
 Deploys automatically to Cloudflare Workers on push to `main` via GitHub Actions.
 
-Required GitHub Secrets:
+Required GitHub Secrets (sourced from the **codustry organization** secrets — already configured, inherited automatically by all repos):
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
