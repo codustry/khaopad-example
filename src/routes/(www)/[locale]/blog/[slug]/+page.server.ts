@@ -1,19 +1,22 @@
 import { error } from "@sveltejs/kit";
 import { marked } from "marked";
+import { toLocale } from "$lib/i18n";
 import type { PageServerLoad } from "./$types";
-import type { Locale } from "$lib/server/content/types";
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-  const locale = params.locale as Locale;
+  const locale = toLocale(params.locale);
   const article = await locals.content.getArticleBySlug(params.slug);
 
   if (!article || article.status !== "published") {
     throw error(404, "Article not found");
   }
 
-  const localization = article.localizations[locale];
+  // Slug is shared across locales; fall back to English (the canonical) if the
+  // requested locale's content is missing.
+  const localization =
+    article.localizations[locale] ?? article.localizations.en;
   if (!localization) {
-    throw error(404, "Article not available in this language");
+    throw error(404, "Article not available");
   }
 
   const htmlContent = await marked(localization.body);

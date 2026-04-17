@@ -1,6 +1,5 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
-	import { cmsHref } from '$lib/cms-href';
 	import { formatDate } from '$lib/utils';
 	let { data } = $props();
 </script>
@@ -12,8 +11,7 @@
 <div>
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-2xl font-bold">{m.cms_articles()}</h1>
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolved in $lib/cms-href -->
-		<a href={cmsHref.articlesNew} class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:opacity-90">
+		<a href="/articles/new" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:opacity-90">
 			{m.cms_new_article()}
 		</a>
 	</div>
@@ -35,8 +33,7 @@
 					{#each data.articles.items as article (article.id)}
 						<tr class="border-t border-border hover:bg-muted/50">
 							<td class="px-4 py-3">
-								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolved in $lib/cms-href -->
-								<a href={cmsHref.article(article.id)} class="hover:underline font-medium">
+								<a href={`/articles/${article.id}`} class="hover:underline font-medium">
 									{article.localizations.th?.title ?? article.localizations.en?.title ?? article.slug}
 								</a>
 							</td>

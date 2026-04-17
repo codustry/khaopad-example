@@ -162,7 +162,9 @@ export const articleTags = sqliteTable(
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.articleId, table.tagId] })],
+  (table) => ({
+    pk: primaryKey({ columns: [table.articleId, table.tagId] }),
+  }),
 );
 
 // ─── Media ───────────────────────────────────────────────

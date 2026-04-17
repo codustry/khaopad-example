@@ -49,4 +49,11 @@ export default defineConfig(
     // 'svelte/button-has-type': 'error'
     rules: {},
   },
+  {
+    // CMS routes use root-relative paths; `(www)` uses `localePath()` for locale-prefixed URLs.
+    files: ["src/routes/(cms)/**/*.svelte", "src/routes/(www)/**/*.svelte"],
+    rules: {
+      "svelte/no-navigation-without-resolve": "off",
+    },
+  },
 );

@@ -9,7 +9,9 @@ A modular CMS built with SvelteKit for Cloudflare. One repo, two subdomains:
 
 ## Tech stack
 
+- **Package manager**: pnpm (CI uses pnpm 9; lockfile is `pnpm-lock.yaml`)
 - **Framework**: SvelteKit 2 + Svelte 5
+- **Bundler**: Vite **5.4.x** (`~5.4.21`) — pinned because Vite 6 currently trips SvelteKit’s `vite-plugin-sveltekit-guard` during production builds (client bundle / `hooks.server.ts` boundary). Prefer unpinning after upgrading SvelteKit when the ecosystem clearly supports Vite 6 for Cloudflare builds.
 - **Styling**: Tailwind CSS 4 + shadcn/ui (bits-ui)
 - **Database**: Cloudflare D1 via Drizzle ORM
 - **Media**: Cloudflare R2
@@ -42,19 +44,29 @@ A modular CMS built with SvelteKit for Cloudflare. One repo, two subdomains:
 ## Commands
 
 ```bash
-bun dev               # Local dev server
-bun run build         # Build for production
-bun run db:generate   # Generate D1 migration from schema changes
-bun run db:migrate    # Apply migrations locally
-bun run db:migrate:remote # Apply migrations to production D1
-bun run deploy        # Build + deploy to Cloudflare Workers
+pnpm dev               # Local dev server
+pnpm build             # Build for production
+pnpm run db:generate   # Generate D1 migration from schema changes
+pnpm run db:migrate    # Apply migrations locally
+pnpm run db:migrate:remote # Apply migrations to production D1
+pnpm run deploy        # Build + deploy to Cloudflare Workers
 ```
 
 ## Content model
 
-- Articles have shared slug/media across languages, separate markdown per locale (TH/EN)
+- Default locale is **English (`en`)**. Thai (`th`) is the secondary locale.
+- Articles have shared slug/media across languages, separate markdown per locale (EN/TH)
 - Localizations stored in separate tables (`article_localizations`, `category_localizations`, etc.)
 - Roles: super_admin > admin > editor > author
+
+### Slug rules (important)
+
+- Slugs are **always English-only ASCII** (`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+- Slugs are **shared across all locales** — there is no per-language slug
+- Slugs are **auto-generated** from the English title via `slugify()` in `$lib/utils`
+- The English (`en`) localization is **required** when creating an article — the slug is derived from `localizations.en.title`
+- Non-ASCII characters are stripped, not transliterated. A Thai-only title cannot produce a slug; the user must supply an English title (or an explicit `slug`)
+- Admins may rename the slug via `updateArticle({ slug })`, but it is then re-normalized through `slugify()` before being stored
 
 ## Important patterns
 

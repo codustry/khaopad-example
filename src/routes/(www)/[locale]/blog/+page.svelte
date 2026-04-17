@@ -1,8 +1,7 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 	import { formatDate } from '$lib/utils';
-	import { toLocale } from '$lib/i18n';
-	import { resolve } from '$app/paths';
+	import { localePath, toLocale } from '$lib/i18n';
 	let { data } = $props();
 	const locale = $derived.by(() => toLocale(data.locale));
 </script>
@@ -22,7 +21,7 @@
 				{@const loc = article.localizations[locale]}
 				{#if loc}
 					<a
-						href={resolve('/(www)/[locale]/blog/[slug]', { locale, slug: article.slug })}
+						href={localePath(locale, `/blog/${article.slug}`)}
 						class="block border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
 					>
 						<h2 class="text-xl font-semibold mb-2">{loc.title}</h2>

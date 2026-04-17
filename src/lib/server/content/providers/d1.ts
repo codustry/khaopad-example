@@ -1,6 +1,7 @@
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { eq, and, desc, like, sql, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { generateSlugFromTitle, slugify } from "$lib/utils";
 import * as schema from "../schema";
 import type {
   ContentProvider,
@@ -129,9 +130,24 @@ export class D1ContentProvider implements ContentProvider {
     const id = nanoid();
     const now = new Date().toISOString();
 
+    // Slug is always English-only and shared across all locales.
+    // If the caller didn't supply one, derive it from the English title.
+    const englishTitle = data.localizations.en?.title;
+    if (!englishTitle) {
+      throw new Error(
+        "localizations.en.title is required (slug is derived from it).",
+      );
+    }
+    const slug = data.slug
+      ? slugify(data.slug)
+      : generateSlugFromTitle(englishTitle);
+    if (!slug) {
+      throw new Error("Slug must contain at least one ASCII letter or digit.");
+    }
+
     await this.db.insert(schema.articles).values({
       id,
-      slug: data.slug,
+      slug,
       coverMediaId: data.coverMediaId ?? null,
       categoryId: data.categoryId ?? null,
       authorId: data.authorId,
@@ -175,7 +191,15 @@ export class D1ContentProvider implements ContentProvider {
     const now = new Date().toISOString();
 
     const updateFields: Record<string, unknown> = { updatedAt: now };
-    if (data.slug !== undefined) updateFields.slug = data.slug;
+    if (data.slug !== undefined) {
+      const normalized = slugify(data.slug);
+      if (!normalized) {
+        throw new Error(
+          "Slug must contain at least one ASCII letter or digit.",
+        );
+      }
+      updateFields.slug = normalized;
+    }
     if (data.coverMediaId !== undefined)
       updateFields.coverMediaId = data.coverMediaId;
     if (data.categoryId !== undefined)
@@ -477,8 +501,8 @@ export class D1ContentProvider implements ContentProvider {
     const rows = await this.db.select().from(schema.siteSettings).all();
     const settings: Record<string, unknown> = {
       siteName: "Khao Pad",
-      defaultLocale: "th",
-      supportedLocales: ["th", "en"],
+      defaultLocale: "en",
+      supportedLocales: ["en", "th"],
     };
 
     for (const row of rows) {

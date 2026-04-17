@@ -18,6 +18,19 @@ const handleAuth: RequestHandler = async ({ request, platform }) => {
       },
     );
   }
+  if (!env) {
+    return new Response(
+      JSON.stringify({
+        error: "configuration_required",
+        message: "Cloudflare bindings are not available.",
+        missing: ["platform.env"],
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+      },
+    );
+  }
 
   const auth = createAuth(env.DB, {
     BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,

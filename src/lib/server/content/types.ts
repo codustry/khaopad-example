@@ -1,5 +1,8 @@
 // ─── Locale ──────────────────────────────────────────────
-export type Locale = "th" | "en";
+export type Locale = "en" | "th";
+
+/** Default canonical locale for slugs and URL fallbacks. */
+export const DEFAULT_LOCALE: Locale = "en";
 
 // ─── Localized content (per language) ────────────────────
 export interface LocalizedContent {
@@ -13,6 +16,11 @@ export interface LocalizedContent {
 // ─── Articles ────────────────────────────────────────────
 export interface ArticleRecord {
   id: string;
+  /**
+   * URL slug. Always English (ASCII), shared across every locale.
+   * Auto-generated from the English title by `slugify()` if the caller does not
+   * supply one explicitly. Must match `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`.
+   */
   slug: string;
   coverMediaId: string | null;
   categoryId: string | null;
@@ -22,21 +30,36 @@ export interface ArticleRecord {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Per-locale text. The English (`en`) entry is **required** when creating an
+   * article because the slug is derived from its title.
+   */
   localizations: Partial<Record<Locale, LocalizedContent>>;
 }
 
 export interface ArticleCreateInput {
-  slug: string;
+  /**
+   * Optional explicit slug. If omitted, the provider derives one from
+   * `localizations.en.title` via `slugify()`. Must be ASCII (`a-z0-9-`).
+   */
+  slug?: string;
   coverMediaId?: string;
   categoryId?: string;
   tagIds?: string[];
   authorId: string;
   status?: ArticleRecord["status"];
   publishedAt?: string;
-  localizations: Partial<Record<Locale, LocalizedContent>>;
+  /** Must include `en` so the slug can be derived from the English title. */
+  localizations: { en: LocalizedContent } & Partial<
+    Record<Locale, LocalizedContent>
+  >;
 }
 
 export interface ArticleUpdateInput {
+  /**
+   * Slugs are immutable across locales but may be re-keyed by an admin (e.g. fixing a typo).
+   * Other languages always reuse the same slug — there is no per-locale slug.
+   */
   slug?: string;
   coverMediaId?: string | null;
   categoryId?: string | null;

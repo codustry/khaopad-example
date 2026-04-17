@@ -45,10 +45,10 @@ const subdomainHook: Handle = async ({ event, resolve }) => {
  */
 const bindingsHook: Handle = async ({ event, resolve }) => {
   const env = event.platform?.env;
-  const supportedLocales = (env?.SUPPORTED_LOCALES ?? "th,en")
+  const supportedLocales = (env?.SUPPORTED_LOCALES ?? "en,th")
     .split(",")
     .map((s) => s.trim());
-  const defaultLocale = env?.DEFAULT_LOCALE ?? "th";
+  const defaultLocale = env?.DEFAULT_LOCALE ?? "en";
   event.locals.locale = localeFromPathname(
     event.url.pathname,
     supportedLocales,
@@ -70,16 +70,16 @@ const bindingsHook: Handle = async ({ event, resolve }) => {
   }
 
   try {
-    const contentMode = (env.CONTENT_MODE ?? "d1") as ContentMode;
-    event.locals.content = createContentProvider(contentMode, env);
+    const contentMode = (env!.CONTENT_MODE ?? "d1") as ContentMode;
+    event.locals.content = createContentProvider(contentMode, env!);
 
     const mediaBaseUrl =
       event.locals.subdomain === "cms"
-        ? `${env.CMS_SITE_URL}/api/media`
-        : `${env.PUBLIC_SITE_URL}/api/media`;
+        ? `${env!.CMS_SITE_URL}/api/media`
+        : `${env!.PUBLIC_SITE_URL}/api/media`;
     event.locals.media = new R2MediaService(
-      env.DB,
-      env.MEDIA_BUCKET,
+      env!.DB,
+      env!.MEDIA_BUCKET,
       mediaBaseUrl,
     );
     event.locals.platformReady = true;
@@ -181,14 +181,18 @@ function ensureParaglideAsyncStorage(): void {
   if (paraglideAsyncStorageInstalled) return;
   paraglideAsyncStorageInstalled = true;
   if (paraglideRuntime.serverAsyncLocalStorage) return;
-  /** @type {{ current?: { locale: string; origin: string; messageCalls: Set<string> } }} */
-  const store = {};
+  type ParaglideServerStore = {
+    locale: import("$lib/paraglide/runtime.js").Locale;
+    origin: string;
+    messageCalls: Set<string>;
+  };
+  const store: { current?: ParaglideServerStore } = {};
   paraglideRuntime.overwriteServerAsyncLocalStorage({
     getStore() {
       return store.current;
     },
     run(s, callback) {
-      store.current = s;
+      store.current = s as ParaglideServerStore;
       return Promise.resolve(callback()).finally(() => {
         store.current = undefined;
       });
@@ -203,9 +207,7 @@ function ensureParaglideAsyncStorage(): void {
  */
 const paraglideLocaleHook: Handle = async ({ event, resolve }) => {
   ensureParaglideAsyncStorage();
-  const locale =
-    /** @type {import("$lib/paraglide/runtime.js").Locale} */ event.locals
-      .locale;
+  const locale = event.locals.locale as import("$lib/paraglide/runtime.js").Locale;
   return paraglideRuntime.serverAsyncLocalStorage!.run(
     {
       locale,
@@ -239,8 +241,8 @@ const authHook: Handle = async ({ event, resolve }) => {
   });
 
   if (session) {
-    event.locals.user = session.user as App.Locals["user"];
-    event.locals.session = session.session as App.Locals["session"];
+    event.locals.user = session.user as unknown as App.Locals["user"];
+    event.locals.session = session.session as unknown as App.Locals["session"];
   } else {
     event.locals.user = null;
     event.locals.session = null;

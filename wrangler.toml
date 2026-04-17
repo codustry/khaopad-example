@@ -40,8 +40,8 @@ id = "LOCAL_KV_ID"                    # Replace with actual KV ID for production
 # ──────────────────────────────────────
 [vars]
 CONTENT_MODE = "d1"                   # "d1" or "github"
-SUPPORTED_LOCALES = "th,en"
-DEFAULT_LOCALE = "th"
+SUPPORTED_LOCALES = "en,th"
+DEFAULT_LOCALE = "en"
 PUBLIC_SITE_URL = "https://www.example.com"
 CMS_SITE_URL = "https://cms.example.com"
 # GitHub content mode vars (only needed when CONTENT_MODE = "github")

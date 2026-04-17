@@ -66,9 +66,10 @@ Khao Pad fills the gap: **start lightweight, scale when needed, stay on Cloudfla
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) 1+
+- [Node.js](https://nodejs.org/) 22+ (for local tooling parity with CI)
+- [pnpm](https://pnpm.io/) 9+
 - Cloudflare account
-- Wrangler CLI (`bun add -g wrangler`)
+- Wrangler CLI (`pnpm add -g wrangler`)
 
 ### Setup
 
@@ -78,7 +79,7 @@ git clone https://github.com/codustry/khaopad.git
 cd khaopad
 
 # Install dependencies
-bun install
+pnpm install
 
 # Copy environment variables
 cp .env.example .env
@@ -92,10 +93,10 @@ wrangler kv namespace create CONTENT_CACHE
 # Update wrangler.toml with the IDs from above
 
 # Run database migrations
-bun run db:migrate
+pnpm run db:migrate
 
 # Start dev server
-bun dev
+pnpm dev
 ```
 
 ### Local Development
@@ -115,14 +116,16 @@ Then access:
 
 ```
 Article (shared)
-├── id, slug, status, coverMedia, category, tags, author
-├── Localization (TH)
+├── id, slug (English ASCII), status, coverMedia, category, tags, author
+├── Localization (EN) ← required, slug is derived from this title
 │   └── title, excerpt, body (markdown), SEO fields
-└── Localization (EN)
+└── Localization (TH)
     └── title, excerpt, body (markdown), SEO fields
 ```
 
 Articles share the same slug and media across languages. Only the text content differs per locale.
+
+**Slugs are always English ASCII** (`^[a-z0-9]+(?:-[a-z0-9]+)*$`) and auto-generated from the English title via `slugify()`. The same slug serves every locale — there is no per-language slug.
 
 ## Storage Modes
 
@@ -149,7 +152,7 @@ Both modes share the same `ContentProvider` interface — your CMS code doesn't 
 
 Deploys automatically to Cloudflare Workers on push to `main` via GitHub Actions.
 
-Required GitHub Secrets:
+Required GitHub Secrets (sourced from the **codustry organization** secrets — already configured, inherited automatically by all repos):
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
@@ -160,14 +163,14 @@ Required Cloudflare Secrets (set via `wrangler secret put`):
 
 ## Scripts
 
-| Command                     | Description                            |
-| --------------------------- | -------------------------------------- |
-| `bun dev`                   | Start local dev server                 |
-| `bun run build`             | Build for production                   |
-| `bun run db:generate`       | Generate migration from schema changes |
-| `bun run db:migrate`        | Apply migrations locally               |
-| `bun run db:migrate:remote` | Apply migrations to production D1      |
-| `bun run deploy`            | Build and deploy to Cloudflare Workers |
+| Command                      | Description                            |
+| ---------------------------- | -------------------------------------- |
+| `pnpm dev`                   | Start local dev server                 |
+| `pnpm run build`             | Build for production                   |
+| `pnpm run db:generate`       | Generate migration from schema changes |
+| `pnpm run db:migrate`        | Apply migrations locally               |
+| `pnpm run db:migrate:remote` | Apply migrations to production D1      |
+| `pnpm run deploy`            | Build and deploy to Cloudflare Workers |
 
 ## Roadmap
 

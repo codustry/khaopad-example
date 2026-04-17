@@ -1,22 +1,23 @@
 <script lang="ts">
 	import '../../app.css';
 	import * as m from '$lib/paraglide/messages';
-	import { getAlternateLocale, toLocale } from '$lib/i18n';
-	import { resolve } from '$app/paths';
-	let { children, data } = $props();
-	const locale = $derived.by(() => toLocale(data.locale));
+	import { localePath, toLocale, getAlternateLocale } from '$lib/i18n';
+	import type { Snippet } from 'svelte';
+	import type { LayoutData } from './$types';
+
+	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 </script>
 
 <div class="min-h-screen flex flex-col">
 	<header class="border-b border-border">
 		<div class="container mx-auto px-4 py-4 flex items-center justify-between">
-			<a href={resolve('/')} class="text-xl font-bold">{m.site_name()}</a>
+			<a href="/" class="text-xl font-bold">{m.site_name()}</a>
 			<nav class="flex items-center gap-4 text-sm">
-				<a href={resolve('/(www)/[locale]/blog', { locale })} class="hover:text-primary">
+				<a href={localePath(toLocale(data.locale), '/blog')} class="hover:text-primary">
 					{m.nav_blog()}
 				</a>
 				<a
-					href={resolve('/(www)/[locale]', { locale: getAlternateLocale(locale) })}
+					href={localePath(getAlternateLocale(toLocale(data.locale)), '/')}
 					data-sveltekit-reload
 					class="px-2 py-1 border border-border rounded text-xs hover:bg-muted"
 				>
