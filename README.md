@@ -66,8 +66,8 @@ Khao Pad fills the gap: **start lightweight, scale when needed, stay on Cloudfla
 
 ### Prerequisites
 
-- Node.js 22+
-- pnpm 9+
+- [Node.js](https://nodejs.org/) 22+ (for local tooling parity with CI)
+- [pnpm](https://pnpm.io/) 9+
 - Cloudflare account
 - Wrangler CLI (`pnpm add -g wrangler`)
 
@@ -93,7 +93,7 @@ wrangler kv namespace create CONTENT_CACHE
 # Update wrangler.toml with the IDs from above
 
 # Run database migrations
-pnpm db:migrate
+pnpm run db:migrate
 
 # Start dev server
 pnpm dev
@@ -163,14 +163,14 @@ Required Cloudflare Secrets (set via `wrangler secret put`):
 
 ## Scripts
 
-| Command                  | Description                            |
-| ------------------------ | -------------------------------------- |
-| `pnpm dev`               | Start local dev server                 |
-| `pnpm build`             | Build for production                   |
-| `pnpm db:generate`       | Generate migration from schema changes |
-| `pnpm db:migrate`        | Apply migrations locally               |
-| `pnpm db:migrate:remote` | Apply migrations to production D1      |
-| `pnpm deploy`            | Build and deploy to Cloudflare Workers |
+| Command                      | Description                            |
+| ---------------------------- | -------------------------------------- |
+| `pnpm dev`                   | Start local dev server                 |
+| `pnpm run build`             | Build for production                   |
+| `pnpm run db:generate`       | Generate migration from schema changes |
+| `pnpm run db:migrate`        | Apply migrations locally               |
+| `pnpm run db:migrate:remote` | Apply migrations to production D1      |
+| `pnpm run deploy`            | Build and deploy to Cloudflare Workers |
 
 ## Roadmap
 

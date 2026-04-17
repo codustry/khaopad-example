@@ -18,6 +18,7 @@
 				</a>
 				<a
 					href={localePath(getAlternateLocale(toLocale(data.locale)), '/')}
+					data-sveltekit-reload
 					class="px-2 py-1 border border-border rounded text-xs hover:bg-muted"
 				>
 					{m.lang_switch()}
