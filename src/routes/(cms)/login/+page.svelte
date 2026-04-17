@@ -2,7 +2,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data: _data }: { data: PageData } = $props();
 
 	let email = $state('');
 	let password = $state('');
@@ -22,8 +22,11 @@
 			});
 
 			if (!res.ok) {
-				const data = await res.json();
-				error = data.message ?? 'Login failed';
+				const err = await res.json();
+				error =
+					typeof err === 'object' && err !== null && 'message' in err
+						? String((err as { message?: string }).message)
+						: 'Login failed';
 				return;
 			}
 

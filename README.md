@@ -8,11 +8,11 @@
 
 We kept running into the same CMS problem:
 
-| Solution | Problem |
-|----------|---------|
-| Supabase | Great ecosystem, but $25/mo is heavy for small sites when Cloudflare is nearly free |
-| Self-hosted Strapi | Too large, too many resources, needs separate deployment |
-| Pages CMS | Great UI, but doesn't scale to D1/R2 when you need it |
+| Solution           | Problem                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| Supabase           | Great ecosystem, but $25/mo is heavy for small sites when Cloudflare is nearly free |
+| Self-hosted Strapi | Too large, too many resources, needs separate deployment                            |
+| Pages CMS          | Great UI, but doesn't scale to D1/R2 when you need it                               |
 
 Khao Pad fills the gap: **start lightweight, scale when needed, stay on Cloudflare.**
 
@@ -108,6 +108,7 @@ For subdomain testing locally, add to `/etc/hosts`:
 ```
 
 Then access:
+
 - Public site: `http://www.khaopad.local:5173`
 - CMS admin: `http://cms.khaopad.local:5173`
 
@@ -140,38 +141,41 @@ Both modes share the same `ContentProvider` interface — your CMS code doesn't 
 
 ## User Roles
 
-| Role | Create | Edit Own | Edit Any | Publish | Delete Any | Manage Users/Settings |
-|------|:------:|:--------:|:--------:|:-------:|:----------:|:---------------------:|
-| Author | yes | yes | - | - | - | - |
-| Editor | yes | yes | yes | yes | - | - |
-| Admin | yes | yes | yes | yes | yes | yes |
-| Super Admin | yes | yes | yes | yes | yes | yes |
+| Role        | Create | Edit Own | Edit Any | Publish | Delete Any | Manage Users/Settings |
+| ----------- | :----: | :------: | :------: | :-----: | :--------: | :-------------------: |
+| Author      |  yes   |   yes    |    -     |    -    |     -      |           -           |
+| Editor      |  yes   |   yes    |   yes    |   yes   |     -      |           -           |
+| Admin       |  yes   |   yes    |   yes    |   yes   |    yes     |          yes          |
+| Super Admin |  yes   |   yes    |   yes    |   yes   |    yes     |          yes          |
 
 ## Deployment
 
 Deploys automatically to Cloudflare Workers on push to `main` via GitHub Actions.
 
 Required GitHub Secrets (sourced from the **codustry organization** secrets — already configured, inherited automatically by all repos):
+
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
 Required Cloudflare Secrets (set via `wrangler secret put`):
+
 - `BETTER_AUTH_SECRET`
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start local dev server |
-| `pnpm build` | Build for production |
-| `pnpm db:generate` | Generate migration from schema changes |
-| `pnpm db:migrate` | Apply migrations locally |
-| `pnpm db:migrate:remote` | Apply migrations to production D1 |
-| `pnpm deploy` | Build and deploy to Cloudflare Workers |
+| Command                  | Description                            |
+| ------------------------ | -------------------------------------- |
+| `pnpm dev`               | Start local dev server                 |
+| `pnpm build`             | Build for production                   |
+| `pnpm db:generate`       | Generate migration from schema changes |
+| `pnpm db:migrate`        | Apply migrations locally               |
+| `pnpm db:migrate:remote` | Apply migrations to production D1      |
+| `pnpm deploy`            | Build and deploy to Cloudflare Workers |
 
 ## Roadmap
 
 ### v1.0 (MVP)
+
 - [x] Project scaffold and architecture
 - [ ] D1 content provider (articles, categories, tags)
 - [ ] Better Auth integration
@@ -180,12 +184,14 @@ Required Cloudflare Secrets (set via `wrangler secret put`):
 - [ ] GitHub Actions deployment
 
 ### v1.1
+
 - [ ] GitHub content provider (Mode A)
 - [ ] Migration CLI (GitHub → D1)
 - [ ] OAuth providers (Google, GitHub)
 - [ ] Rich media management
 
 ### v2.0
+
 - [ ] Custom content types (pages, FAQs)
 - [ ] Audit trail
 - [ ] Content versioning
@@ -193,6 +199,7 @@ Required Cloudflare Secrets (set via `wrangler secret put`):
 - [ ] Full-text search
 
 ### v3.0
+
 - [ ] Plugin system
 - [ ] Multi-site support
 - [ ] White-label CMS

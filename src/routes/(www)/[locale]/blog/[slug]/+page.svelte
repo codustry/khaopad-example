@@ -21,6 +21,7 @@
 	</header>
 
 	<div class="prose prose-lg max-w-none">
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted from marked() in +page.server.ts -->
 		{@html data.htmlContent}
 	</div>
 </article>
