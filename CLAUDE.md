@@ -3,6 +3,7 @@
 ## What is this?
 
 A modular CMS built with SvelteKit for Cloudflare. One repo, two subdomains:
+
 - `www.example.com` — public website (SSR)
 - `cms.example.com` — admin panel (authenticated)
 

@@ -17,7 +17,7 @@
 		<p class="text-muted-foreground">{m.blog_no_articles()}</p>
 	{:else}
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{#each data.articles.items as article}
+			{#each data.articles.items as article (article.id)}
 				{@const loc = article.localizations[data.locale]}
 				{#if loc}
 					<a

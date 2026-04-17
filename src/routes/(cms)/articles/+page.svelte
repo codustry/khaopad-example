@@ -35,7 +35,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each data.articles.items as article}
+					{#each data.articles.items as article (article.id)}
 						<tr class="border-t border-border hover:bg-muted/50">
 							<td class="px-4 py-3">
 								<a href="/articles/{article.id}" class="hover:underline font-medium">

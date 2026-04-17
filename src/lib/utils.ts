@@ -1,18 +1,21 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /** Merge Tailwind classes (shadcn/ui helper) */
 export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs));
 }
 
 /** Format a date string for display */
-export function formatDate(date: string, locale: string = 'en'): string {
-	return new Date(date).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
+export function formatDate(date: string, locale: string = "en"): string {
+  return new Date(date).toLocaleDateString(
+    locale === "th" ? "th-TH" : "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+  );
 }
 
 /**
@@ -29,16 +32,16 @@ export function formatDate(date: string, locale: string = 'en'): string {
  *   slugify("สวัสดี")              -> ""   (caller must validate non-empty)
  */
 export function slugify(text: string): string {
-	return text
-		.toLowerCase()
-		.normalize('NFKD')
-		.replace(/[\u0300-\u036f]/g, '')   // strip combining diacritics
-		.replace(/[^\x20-\x7e]/g, '')       // ASCII printable only
-		.replace(/[^a-z0-9\s-]/g, '')       // letters/digits/space/hyphen
-		.trim()
-		.replace(/[\s_]+/g, '-')
-		.replace(/-+/g, '-')
-		.replace(/^-+|-+$/g, '');
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "") // strip combining diacritics
+    .replace(/[^\x20-\x7e]/g, "") // ASCII printable only
+    .replace(/[^a-z0-9\s-]/g, "") // letters/digits/space/hyphen
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 /**
@@ -49,17 +52,17 @@ export function slugify(text: string): string {
  * from non-Latin titles, so the user must supply an English title.
  */
 export function generateSlugFromTitle(englishTitle: string): string {
-	const slug = slugify(englishTitle);
-	if (!slug) {
-		throw new Error(
-			'Cannot generate slug: English title is required and must contain ASCII letters or digits.',
-		);
-	}
-	return slug;
+  const slug = slugify(englishTitle);
+  if (!slug) {
+    throw new Error(
+      "Cannot generate slug: English title is required and must contain ASCII letters or digits.",
+    );
+  }
+  return slug;
 }
 
 /** Truncate text to a max length */
 export function truncate(text: string, maxLength: number): string {
-	if (text.length <= maxLength) return text;
-	return text.slice(0, maxLength).trimEnd() + '...';
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength).trimEnd() + "...";
 }
