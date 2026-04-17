@@ -207,7 +207,8 @@ function ensureParaglideAsyncStorage(): void {
  */
 const paraglideLocaleHook: Handle = async ({ event, resolve }) => {
   ensureParaglideAsyncStorage();
-  const locale = event.locals.locale as import("$lib/paraglide/runtime.js").Locale;
+  const locale = event.locals
+    .locale as import("$lib/paraglide/runtime.js").Locale;
   return paraglideRuntime.serverAsyncLocalStorage!.run(
     {
       locale,
