@@ -66,8 +66,8 @@ Khao Pad fills the gap: **start lightweight, scale when needed, stay on Cloudfla
 
 ### Prerequisites
 
-- Node.js 22+
-- pnpm 9+
+- [Node.js](https://nodejs.org/) 22+ (for local tooling parity with CI)
+- [pnpm](https://pnpm.io/) 9+
 - Cloudflare account
 - Wrangler CLI (`pnpm add -g wrangler`)
 
@@ -93,7 +93,7 @@ wrangler kv namespace create CONTENT_CACHE
 # Update wrangler.toml with the IDs from above
 
 # Run database migrations
-pnpm db:migrate
+pnpm run db:migrate
 
 # Start dev server
 pnpm dev

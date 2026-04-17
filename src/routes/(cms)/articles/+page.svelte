@@ -1,9 +1,7 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 	import { formatDate } from '$lib/utils';
-	import type { PageData } from './$types';
-
-	let { data }: { data: PageData } = $props();
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -13,10 +11,7 @@
 <div>
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-2xl font-bold">{m.cms_articles()}</h1>
-		<a
-			href="/articles/new"
-			class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:opacity-90"
-		>
+		<a href="/articles/new" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:opacity-90">
 			{m.cms_new_article()}
 		</a>
 	</div>
@@ -38,7 +33,7 @@
 					{#each data.articles.items as article (article.id)}
 						<tr class="border-t border-border hover:bg-muted/50">
 							<td class="px-4 py-3">
-								<a href="/articles/{article.id}" class="hover:underline font-medium">
+								<a href={`/articles/${article.id}`} class="hover:underline font-medium">
 									{article.localizations.th?.title ?? article.localizations.en?.title ?? article.slug}
 								</a>
 							</td>

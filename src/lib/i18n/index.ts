@@ -8,7 +8,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   en: "English",
 };
 
-/** Narrow `string` (e.g. from layout data) to `Locale` without `as` in components. */
+/** Narrow `string` (e.g. from layout data) to {@link Locale} without `as` in components. */
 export function toLocale(value: string): Locale {
   if (value === "en" || value === "th") return value;
   return DEFAULT_LOCALE;

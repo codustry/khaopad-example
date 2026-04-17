@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { formatDate } from '$lib/utils';
-	import type { PageData } from './$types';
-
-	let { data }: { data: PageData } = $props();
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -21,7 +19,7 @@
 	</header>
 
 	<div class="prose prose-lg max-w-none">
-		<!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted from marked() in +page.server.ts -->
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted: server-rendered markdown from CMS -->
 		{@html data.htmlContent}
 	</div>
 </article>

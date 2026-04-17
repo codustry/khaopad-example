@@ -9,7 +9,9 @@ A modular CMS built with SvelteKit for Cloudflare. One repo, two subdomains:
 
 ## Tech stack
 
+- **Package manager**: pnpm (CI uses pnpm 9; lockfile is `pnpm-lock.yaml`)
 - **Framework**: SvelteKit 2 + Svelte 5
+- **Bundler**: Vite **5.4.x** (`~5.4.21`) — pinned because Vite 6 currently trips SvelteKit’s `vite-plugin-sveltekit-guard` during production builds (client bundle / `hooks.server.ts` boundary). Prefer unpinning after upgrading SvelteKit when the ecosystem clearly supports Vite 6 for Cloudflare builds.
 - **Styling**: Tailwind CSS 4 + shadcn/ui (bits-ui)
 - **Database**: Cloudflare D1 via Drizzle ORM
 - **Media**: Cloudflare R2
@@ -42,12 +44,12 @@ A modular CMS built with SvelteKit for Cloudflare. One repo, two subdomains:
 ## Commands
 
 ```bash
-pnpm dev              # Local dev server
-pnpm build            # Build for production
-pnpm db:generate      # Generate D1 migration from schema changes
-pnpm db:migrate       # Apply migrations locally
-pnpm db:migrate:remote # Apply migrations to production D1
-pnpm deploy           # Build + deploy to Cloudflare Workers
+pnpm dev               # Local dev server
+pnpm build             # Build for production
+pnpm run db:generate   # Generate D1 migration from schema changes
+pnpm run db:migrate    # Apply migrations locally
+pnpm run db:migrate:remote # Apply migrations to production D1
+pnpm run deploy        # Build + deploy to Cloudflare Workers
 ```
 
 ## Content model
