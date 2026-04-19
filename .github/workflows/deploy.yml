@@ -123,7 +123,19 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 migrations apply khaopad-db --remote --env ${{ needs.resolve-env.outputs.environment }}
+          command: d1 migrations apply khaopad-example-db --remote --env ${{ needs.resolve-env.outputs.environment }}
+
+      # BETTER_AUTH_SECRET is stored as a GitHub repo secret and pushed into
+      # the worker secret store on every deploy. Idempotent.
+      - name: Sync BETTER_AUTH_SECRET into worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          ENV: ${{ needs.resolve-env.outputs.environment }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$BETTER_AUTH_SECRET" | npx wrangler secret put BETTER_AUTH_SECRET --env "$ENV"
 
       - name: Deploy Worker (${{ needs.resolve-env.outputs.environment }})
         uses: cloudflare/wrangler-action@v3
