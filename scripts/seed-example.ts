@@ -47,7 +47,12 @@ const tagDefs: Array<{
   th: string;
 }> = [
   { id: tagIds.rice, slug: "rice", en: "Rice", th: "ข้าว" },
-  { id: tagIds.street, slug: "street-food", en: "Street Food", th: "อาหารริมทาง" },
+  {
+    id: tagIds.street,
+    slug: "street-food",
+    en: "Street Food",
+    th: "อาหารริมทาง",
+  },
   { id: tagIds.quick, slug: "quick", en: "Quick", th: "ทำเร็ว" },
   { id: tagIds.veg, slug: "vegetarian", en: "Vegetarian", th: "มังสวิรัติ" },
   { id: tagIds.spicy, slug: "spicy", en: "Spicy", th: "เผ็ด" },
@@ -73,7 +78,8 @@ const articles: ArticleSeed[] = [
     slug: "classic-khao-pad",
     titleEn: "Classic Khao Pad",
     titleTh: "ข้าวผัดต้นตำรับ",
-    excerptEn: "The foundational Thai fried rice — garlic, egg, and day-old jasmine rice.",
+    excerptEn:
+      "The foundational Thai fried rice — garlic, egg, and day-old jasmine rice.",
     excerptTh: "ข้าวผัดสูตรพื้นฐาน ด้วยกระเทียม ไข่ และข้าวหอมมะลิค้างคืน",
     bodyEn: `# Classic Khao Pad
 
@@ -153,8 +159,10 @@ The seafood version that rules Bangkok lunch menus. Prawn heads go in first — 
     slug: "khao-pad-sapparot",
     titleEn: "Pineapple Fried Rice",
     titleTh: "ข้าวผัดสับปะรด",
-    excerptEn: "Curry-gold rice with cashews, raisins, and juicy pineapple chunks.",
-    excerptTh: "ข้าวผัดสีเหลืองทองกลิ่นผงกะหรี่ เม็ดมะม่วงหิมพานต์ ลูกเกด และสับปะรด",
+    excerptEn:
+      "Curry-gold rice with cashews, raisins, and juicy pineapple chunks.",
+    excerptTh:
+      "ข้าวผัดสีเหลืองทองกลิ่นผงกะหรี่ เม็ดมะม่วงหิมพานต์ ลูกเกด และสับปะรด",
     bodyEn: `# Pineapple Fried Rice
 
 A tourist favorite for a reason — the sweet/savory balance is perfect. Yellow curry powder does the color work.
@@ -191,7 +199,8 @@ No garlic or onion if cooking strictly *jay*.`,
     slug: "khao-pad-krapao",
     titleEn: "Khao Pad Krapao",
     titleTh: "ข้าวผัดกะเพรา",
-    excerptEn: "Holy-basil stir-fry folded into fried rice — the lunch of champions.",
+    excerptEn:
+      "Holy-basil stir-fry folded into fried rice — the lunch of champions.",
     excerptTh: "ข้าวผัดใบกะเพรารสจัด อาหารกลางวันโปรดของคนไทย",
     bodyEn: `# Khao Pad Krapao
 

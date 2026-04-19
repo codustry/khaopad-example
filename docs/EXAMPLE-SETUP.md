@@ -46,14 +46,14 @@ pnpm setup                    # creates D1 db, R2 bucket, KV namespace
 
 `pnpm setup` prints the IDs you need. Open `wrangler.toml` and replace the placeholders:
 
-| Placeholder         | Where to find it                               |
-| ------------------- | ---------------------------------------------- |
-| `LOCAL_DB_ID`       | `wrangler d1 create khaopad-db` output         |
-| `LOCAL_KV_ID`       | `wrangler kv namespace create CONTENT_CACHE`   |
-| `STAGING_DB_ID`     | Reuse `LOCAL_DB_ID` for the demo (single env)  |
-| `STAGING_KV_ID`     | Reuse `LOCAL_KV_ID`                            |
-| `PRODUCTION_DB_ID`  | Reuse `LOCAL_DB_ID`                            |
-| `PRODUCTION_KV_ID`  | Reuse `LOCAL_KV_ID`                            |
+| Placeholder        | Where to find it                              |
+| ------------------ | --------------------------------------------- |
+| `LOCAL_DB_ID`      | `wrangler d1 create khaopad-db` output        |
+| `LOCAL_KV_ID`      | `wrangler kv namespace create CONTENT_CACHE`  |
+| `STAGING_DB_ID`    | Reuse `LOCAL_DB_ID` for the demo (single env) |
+| `STAGING_KV_ID`    | Reuse `LOCAL_KV_ID`                           |
+| `PRODUCTION_DB_ID` | Reuse `LOCAL_DB_ID`                           |
+| `PRODUCTION_KV_ID` | Reuse `LOCAL_KV_ID`                           |
 
 > The demo uses a single set of Cloudflare resources for all envs to keep setup short. A real production site should provision separate D1/R2/KV per environment — see `docs/DEPLOYMENT.md`.
 
@@ -84,7 +84,7 @@ Watch the **Deploy** workflow in the Actions tab. When it finishes:
 
 ### 6. Create the first admin
 
-The seed inserts a *placeholder* admin row but does **not** set a password (Better Auth requires the user to set their own).
+The seed inserts a _placeholder_ admin row but does **not** set a password (Better Auth requires the user to set their own).
 
 1. Visit `/register` on your deployed worker.
 2. Sign up with the email you actually want to use as super-admin.
