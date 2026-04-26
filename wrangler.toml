@@ -5,15 +5,7 @@ main = ".svelte-kit/cloudflare/_worker.js"
 assets = { directory = ".svelte-kit/cloudflare", binding = "ASSETS" }
 
 # ──────────────────────────────────────
-# Routes — uncomment and configure for production
-# ──────────────────────────────────────
-# routes = [
-#   { pattern = "www.example.com/*", zone_name = "example.com" },
-#   { pattern = "cms.example.com/*", zone_name = "example.com" },
-# ]
-
-# ──────────────────────────────────────
-# D1 Database
+# Cloudflare resources (Codustry account)
 # ──────────────────────────────────────
 [[d1_databases]]
 binding = "DB"
@@ -21,67 +13,18 @@ database_name = "khaopad-example-db"
 database_id = "f961aace-5d9f-41bc-ae36-563a60e6c274"
 migrations_dir = "drizzle"
 
-# ──────────────────────────────────────
-# R2 Media Bucket
-# ──────────────────────────────────────
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
 bucket_name = "khaopad-example-media"
 
-# ──────────────────────────────────────
-# KV Content Cache
-# ──────────────────────────────────────
 [[kv_namespaces]]
 binding = "CONTENT_CACHE"
 id = "eaa2d962e21c44a585a64fcf497e1e5f"
 
 # ──────────────────────────────────────
-# Environment variables
+# Public env vars
 # ──────────────────────────────────────
 [vars]
-CONTENT_MODE = "d1"                   # "d1" or "github"
-SUPPORTED_LOCALES = "en,th"
-DEFAULT_LOCALE = "en"
-PUBLIC_SITE_URL = "https://khaopad-example.codustry.workers.dev"
-CMS_SITE_URL = "https://khaopad-example.codustry.workers.dev"
-BETTER_AUTH_URL = "https://khaopad-example.codustry.workers.dev"
-
-# ──────────────────────────────────────
-# Environments
-# ──────────────────────────────────────
-# Demo note: this fork reuses the same D1/R2/KV across all envs to keep
-# setup short. A real production site should provision a separate stack
-# per env (see docs/DEPLOYMENT.md).
-
-[env.staging]
-name = "khaopad-example-staging"
-
-[env.staging.vars]
-CONTENT_MODE = "d1"
-SUPPORTED_LOCALES = "en,th"
-DEFAULT_LOCALE = "en"
-PUBLIC_SITE_URL = "https://khaopad-example-staging.codustry.workers.dev"
-CMS_SITE_URL = "https://khaopad-example-staging.codustry.workers.dev"
-BETTER_AUTH_URL = "https://khaopad-example-staging.codustry.workers.dev"
-
-[[env.staging.d1_databases]]
-binding = "DB"
-database_name = "khaopad-example-db"
-database_id = "f961aace-5d9f-41bc-ae36-563a60e6c274"
-migrations_dir = "drizzle"
-
-[[env.staging.r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "khaopad-example-media"
-
-[[env.staging.kv_namespaces]]
-binding = "CONTENT_CACHE"
-id = "eaa2d962e21c44a585a64fcf497e1e5f"
-
-[env.production]
-name = "khaopad-example"
-
-[env.production.vars]
 CONTENT_MODE = "d1"
 SUPPORTED_LOCALES = "en,th"
 DEFAULT_LOCALE = "en"
@@ -89,16 +32,4 @@ PUBLIC_SITE_URL = "https://khaopad-example.codustry.workers.dev"
 CMS_SITE_URL = "https://khaopad-example.codustry.workers.dev"
 BETTER_AUTH_URL = "https://khaopad-example.codustry.workers.dev"
 
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "khaopad-example-db"
-database_id = "f961aace-5d9f-41bc-ae36-563a60e6c274"
-migrations_dir = "drizzle"
-
-[[env.production.r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "khaopad-example-media"
-
-[[env.production.kv_namespaces]]
-binding = "CONTENT_CACHE"
-id = "eaa2d962e21c44a585a64fcf497e1e5f"
+# BETTER_AUTH_SECRET is set as a worker secret (not in this file). See README.
