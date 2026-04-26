@@ -10,7 +10,18 @@ export function createAuth(
   const db = drizzle(d1, { schema });
 
   return betterAuth({
-    database: drizzleAdapter(db, { provider: "sqlite" }),
+    database: drizzleAdapter(db, {
+      provider: "sqlite",
+      // Better Auth's adapter looks for singular model names ("user",
+      // "session", "account", "verification"). Our Drizzle schema uses
+      // plural names. Pass the schema explicitly and map the names.
+      schema: {
+        user: schema.users,
+        session: schema.sessions,
+        account: schema.accounts,
+        verification: schema.verifications,
+      },
+    }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/api/auth",
