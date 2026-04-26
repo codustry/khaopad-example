@@ -20,6 +20,16 @@ import { R2MediaService } from "$lib/server/media";
 const subdomainHook: Handle = async ({ event, resolve }) => {
   const host = event.request.headers.get("host") ?? "";
 
+  // Single-host demo mode: when there's no www./cms. split (e.g. on the
+  // default workers.dev URL or local dev), serve both route groups from
+  // the same host — otherwise the CMS would be unreachable.
+  const isSingleHostDemo =
+    !host.startsWith("www.") &&
+    !host.includes("cms.") &&
+    (host.endsWith(".workers.dev") ||
+      host.startsWith("localhost") ||
+      host.startsWith("127.0.0.1"));
+
   // Determine subdomain
   if (host.startsWith("cms.") || host.includes("cms.")) {
     event.locals.subdomain = "cms";
@@ -27,13 +37,19 @@ const subdomainHook: Handle = async ({ event, resolve }) => {
     event.locals.subdomain = "www";
   }
 
-  // Block CMS routes from www and vice versa
-  const path = event.url.pathname;
-  if (event.locals.subdomain === "www" && isCmsRoute(path)) {
-    return new Response("Not Found", { status: 404 });
-  }
-  if (event.locals.subdomain === "cms" && isWwwOnlyRoute(path)) {
-    return new Response("Not Found", { status: 404 });
+  // Block CMS routes from www and vice versa — skipped in single-host demo.
+  if (!isSingleHostDemo) {
+    const path = event.url.pathname;
+    if (event.locals.subdomain === "www" && isCmsRoute(path)) {
+      return new Response("Not Found", { status: 404 });
+    }
+    if (event.locals.subdomain === "cms" && isWwwOnlyRoute(path)) {
+      return new Response("Not Found", { status: 404 });
+    }
+  } else {
+    // Treat the demo host as "cms" so CMS-only data (locals.media baseUrl,
+    // CSP for the admin UI, etc.) gets the right config.
+    event.locals.subdomain = "cms";
   }
 
   return resolve(event);
