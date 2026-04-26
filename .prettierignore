@@ -1,17 +1,12 @@
-# Generated
-src/lib/paraglide/
+node_modules/
 .svelte-kit/
 build/
 dist/
-node_modules/
-
-# Lockfiles
+.wrangler/
+src/lib/paraglide/
 pnpm-lock.yaml
-
-# Inlang artefacts
 project.inlang/.meta.json
 project.inlang/README.md
-
-# GitHub workflows — YAML embeds heredoc markdown that Prettier mis-parses,
-# and GitHub's own validator catches real workflow errors.
 .github/workflows/
+vite.config.ts.timestamp-*.mjs
+drizzle/

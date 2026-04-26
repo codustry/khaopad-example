@@ -24,11 +24,15 @@ id = "eaa2d962e21c44a585a64fcf497e1e5f"
 # ──────────────────────────────────────
 # Public env vars
 # ──────────────────────────────────────
+# Single host, two surfaces (since v1.1):
+#   /            → public site
+#   /cms/*       → admin CMS
 [vars]
 CONTENT_MODE = "d1"
 SUPPORTED_LOCALES = "en,th"
 DEFAULT_LOCALE = "en"
 PUBLIC_SITE_URL = "https://khaopad-example.codustry.workers.dev"
+# CMS_SITE_URL is a deprecated alias used only by the R2 media URL helper.
 CMS_SITE_URL = "https://khaopad-example.codustry.workers.dev"
 BETTER_AUTH_URL = "https://khaopad-example.codustry.workers.dev"
 
