@@ -1,6 +1,10 @@
 import type { RequestHandler } from "./$types";
-import { createAuth, lastAuthError } from "$lib/server/auth";
+import { createAuth } from "$lib/server/auth";
 
+/**
+ * TEMPORARY diagnostic endpoint. Will be removed once signup is
+ * confirmed working in production.
+ */
 export const POST: RequestHandler = async ({ platform }) => {
   const env = platform?.env;
   if (!env?.DB || !env?.BETTER_AUTH_SECRET || !env?.BETTER_AUTH_URL) {
@@ -14,24 +18,34 @@ export const POST: RequestHandler = async ({ platform }) => {
     BETTER_AUTH_URL: env.BETTER_AUTH_URL,
   });
 
-  lastAuthError.value = null;
-
   const stamp = Date.now();
   const email = `betterauth-${stamp}@example.com`;
 
-  let result: unknown = null;
-  let topErr: unknown = null;
   try {
-    result = await auth.api.signUpEmail({
+    const result = await auth.api.signUpEmail({
       body: { name: "Diag", email, password: "diagpass1234" },
       asResponse: false,
     });
+    return new Response(JSON.stringify({ ok: true, result }, null, 2), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
-    topErr = err instanceof Error ? { name: err.name, message: err.message } : String(err);
+    const e = err as Error & { cause?: unknown; status?: number };
+    return new Response(
+      JSON.stringify(
+        {
+          ok: false,
+          name: e?.name,
+          message: e?.message,
+          status: e?.status,
+          stack: e?.stack,
+          cause: e?.cause ? String(e.cause) : null,
+        },
+        null,
+        2,
+      ),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
   }
-
-  return new Response(
-    JSON.stringify({ result, topErr, capturedLog: lastAuthError.value }, null, 2),
-    { status: 200, headers: { "Content-Type": "application/json" } },
-  );
 };
