@@ -28,7 +28,6 @@ id = "eaa2d962e21c44a585a64fcf497e1e5f"
 #   /            → public site
 #   /cms/*       → admin CMS
 [vars]
-CONTENT_MODE = "d1"
 SUPPORTED_LOCALES = "en,th"
 DEFAULT_LOCALE = "en"
 PUBLIC_SITE_URL = "https://khaopad-example.codustry.workers.dev"
