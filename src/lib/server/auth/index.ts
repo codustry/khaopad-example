@@ -27,6 +27,13 @@ function coerceDates<T extends Record<string, unknown>>(row: T): T {
   return out as T;
 }
 
+/**
+ * Last error captured by Better Auth's logger. Diagnostic only —
+ * read by /api/auth-diag to surface the real DB error in the HTTP
+ * response. Reset on each Better Auth invocation by the request.
+ */
+export const lastAuthError: { value: unknown } = { value: null };
+
 export function createAuth(
   d1: D1Database,
   env: { BETTER_AUTH_SECRET: string; BETTER_AUTH_URL: string },
@@ -36,9 +43,6 @@ export function createAuth(
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "sqlite",
-      // Better Auth's adapter looks for singular model names ("user",
-      // "session", "account", "verification"). Our Drizzle schema uses
-      // plural names. Pass the schema explicitly and map the names.
       schema: {
         user: schema.users,
         session: schema.sessions,
@@ -49,24 +53,16 @@ export function createAuth(
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/api/auth",
-    emailAndPassword: {
-      enabled: true,
-    },
+    emailAndPassword: { enabled: true },
     session: {
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24, // refresh daily
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
     },
     user: {
       additionalFields: {
-        role: {
-          type: "string",
-          defaultValue: "author",
-          input: false,
-        },
+        role: { type: "string", defaultValue: "author", input: false },
       },
     },
-    // Coerce Date → ISO string on the way into the database for every
-    // model Better Auth manages. See `coerceDates` above for context.
     databaseHooks: {
       user: {
         create: { before: async (user) => ({ data: coerceDates(user) }) },
@@ -83,6 +79,25 @@ export function createAuth(
       verification: {
         create: { before: async (v) => ({ data: coerceDates(v) }) },
         update: { before: async (v) => ({ data: coerceDates(v) }) },
+      },
+    },
+    logger: {
+      level: "debug",
+      log: (level, message, ...args) => {
+        // Capture the most recent error for the diagnostic endpoint.
+        if (level === "error") {
+          lastAuthError.value = {
+            level,
+            message,
+            args: args.map((a) =>
+              a instanceof Error
+                ? { name: a.name, message: a.message, stack: a.stack, cause: a.cause ? String(a.cause) : null }
+                : a,
+            ),
+          };
+        }
+        // eslint-disable-next-line no-console
+        console.log(`[better-auth:${level}] ${message}`, ...args);
       },
     },
   });
