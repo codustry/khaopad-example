@@ -271,18 +271,3 @@ export const handle = sequence(
   paraglideLocaleHook,
   authHook,
 );
-
-// Surface the real error in the response so we can read it from
-// curl/the browser instead of seeing a generic "Internal Error".
-// TEMPORARY — remove once signup is verified end-to-end.
-export const handleError = ({ error: err, status }: { error: unknown; status: number }) => {
-  const e = err as Error & { cause?: unknown };
-  return {
-    message:
-      `[${status}] ` +
-      (e?.name ?? "?") +
-      ": " +
-      (e?.message ?? String(err)) +
-      (e?.stack ? "\n" + e.stack.split("\n").slice(0, 6).join("\n") : ""),
-  };
-};
