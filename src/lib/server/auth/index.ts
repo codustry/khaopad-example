@@ -65,7 +65,13 @@ export function createAuth(
     },
     databaseHooks: {
       user: {
-        create: { before: async (user) => ({ data: coerceDates(user) }) },
+        create: {
+          before: async (user) => {
+            // eslint-disable-next-line no-console
+            console.log("[hook] user.create.before", JSON.stringify(user, (_, v) => (v instanceof Date ? `Date(${v.toISOString()})` : v)));
+            return { data: coerceDates(user) };
+          },
+        },
         update: { before: async (user) => ({ data: coerceDates(user) }) },
       },
       session: {
