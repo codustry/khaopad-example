@@ -37,6 +37,36 @@
 		</p>
 	</header>
 
+	<form method="GET" class="mb-10 flex flex-wrap gap-2" role="search">
+		<input
+			type="search"
+			name="q"
+			value={data.q ?? ''}
+			placeholder={m.blog_search_placeholder()}
+			class="min-w-[220px] flex-1 rounded-full border-2 border-foreground bg-background px-4 py-2 text-sm shadow-[0_2px_0_0_oklch(0.145_0_0)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+		/>
+		<button
+			type="submit"
+			class="rounded-full border-2 border-foreground bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_2px_0_0_oklch(0.145_0_0)] hover:-translate-y-0.5"
+		>
+			{m.blog_search_submit()}
+		</button>
+		{#if data.q}
+			<a
+				href={localePath(locale, '/blog')}
+				class="rounded-full border-2 border-foreground bg-background px-5 py-2 text-sm font-semibold shadow-[0_2px_0_0_oklch(0.145_0_0)] hover:-translate-y-0.5"
+			>
+				{m.blog_search_clear()}
+			</a>
+		{/if}
+	</form>
+
+	{#if data.q}
+		<p class="mb-6 text-sm text-muted-foreground">
+			{m.blog_search_results({ count: String(data.articles.items.length), query: data.q })}
+		</p>
+	{/if}
+
 	{#if activeCategoryName || activeTagName}
 		<div
 			class="mb-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-2.5"
