@@ -2,6 +2,7 @@
 	import { formatDate } from '$lib/utils';
 	import { localePath, toLocale } from '$lib/i18n';
 	import * as m from '$lib/paraglide/messages';
+	import ResponsiveImage from '$lib/components/media/ResponsiveImage.svelte';
 	let { data } = $props();
 	const locale = $derived(toLocale(data.locale));
 </script>
@@ -29,10 +30,11 @@
 	</header>
 
 	{#if data.coverMediaId}
-		<img
+		<ResponsiveImage
 			src={`/api/media/${data.coverMediaId}`}
 			alt=""
-			class="mb-10 aspect-[16/9] w-full rounded-2xl border border-border object-cover"
+			class="mb-10 w-full rounded-2xl border border-border object-cover"
+			aspect="aspect-[16/9]"
 		/>
 	{/if}
 
