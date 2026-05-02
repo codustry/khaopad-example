@@ -3,6 +3,7 @@
 	import { localePath, toLocale } from '$lib/i18n';
 	import * as m from '$lib/paraglide/messages';
 	import ResponsiveImage from '$lib/components/media/ResponsiveImage.svelte';
+	import CommentSection from '$lib/components/comments/CommentSection.svelte';
 	let { data } = $props();
 	const locale = $derived(toLocale(data.locale));
 </script>
@@ -53,6 +54,14 @@
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted: server-rendered markdown from CMS -->
 		{@html data.htmlContent}
 	</div>
+
+	{#if data.commentsOpen || data.comments.length > 0}
+		<CommentSection
+			articleId={data.articleId}
+			comments={data.comments}
+			open={data.commentsOpen}
+		/>
+	{/if}
 
 	<footer class="mt-16 border-t border-border pt-8">
 		<a
