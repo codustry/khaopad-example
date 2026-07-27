@@ -8,8 +8,8 @@ The official live demo of [Khao Pad](https://github.com/codustry/khaopad), the o
 
 A content-rich showcase, not a generic placeholder. Read it to see what a finished Khao Pad site looks like before you commit to the platform.
 
-- **Subject**: a short history of khao pad — Thailand's most ubiquitous dish — told as a 5-essay series across origin, royal kitchens, regional variants, day-old rice, and the modern global diaspora
-- **Bilingual**: every essay published in English and Thai (well, English fully; Thai partial — exactly the editorial reality of most multilingual sites)
+- **Subject**: a tour through **12 fried rice recipes across 7 countries** — Thailand (classic khao pad, goong, pineapple, jay, krapao), China (Yangzhou, egg fried rice), Indonesia (nasi goreng), Korea (kimchi bokkeumbap), Japan (chahan), Peru (arroz chaufa — Chinese-Peruvian *chifa*), and the USA (Cajun dirty rice). Each essay teaches one recipe with the technique that matters most.
+- **Bilingual**: every recipe published in English and Thai, mirrored 1:1
 - **Brand polish**: paypers-style visual reskin on the public surface — sticky topbar with a `ข` glyph mark, IBM Plex Sans Thai + Inter Tight typography, radial gradient background, story-led hero, numbered essay-list blog index, generous reading column
 - **All eleven Khao Pad milestones live**: SEO (full meta + JSON-LD + sitemap + RSS), analytics (privacy-friendly D1 page-views), comments (dual-toggle), forms, newsletter (single-opt-in with no provider configured), webhooks, public REST API. Everything you can do upstream is wired up here.
 
