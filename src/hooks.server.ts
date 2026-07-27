@@ -16,7 +16,7 @@ import { R2MediaService } from "$lib/server/media";
  * Surface detection hook.
  *
  * Khao Pad is one SvelteKit app serving two surfaces from the same host:
- * the public site at `/*` and the admin CMS at `/cms/*`. We tag every
+ * the public site at `/*` and the admin CMS at `/admin/*`. We tag every
  * request with `event.locals.surface` so downstream hooks (auth, media,
  * locale) can branch on it without re-parsing the URL.
  *
@@ -27,7 +27,7 @@ import { R2MediaService } from "$lib/server/media";
  * cookies. See docs/ARCHITECTURE.md for the migration rationale.
  */
 const surfaceHook: Handle = async ({ event, resolve }) => {
-  event.locals.surface = isCmsPath(event.url.pathname) ? "cms" : "www";
+  event.locals.surface = isAdminPath(event.url.pathname) ? "admin" : "www";
   // Back-compat: `subdomain` is still read by older hooks. Keep until removed.
   event.locals.subdomain = event.locals.surface;
   return resolve(event);
@@ -67,7 +67,7 @@ const bindingsHook: Handle = async ({ event, resolve }) => {
     event.locals.content = createContentProvider(env!);
 
     const mediaBaseUrl =
-      event.locals.subdomain === "cms"
+      event.locals.subdomain === "admin"
         ? `${env!.CMS_SITE_URL}/api/media`
         : `${env!.PUBLIC_SITE_URL}/api/media`;
     event.locals.media = new R2MediaService(
@@ -255,11 +255,11 @@ const authHook: Handle = async ({ event, resolve }) => {
 // ─── Route classification helpers ────────────────────────
 
 /**
- * Returns true if the request targets the admin CMS surface.
+ * Returns true if the request targets the admin surface (`/admin/*`).
  * Single source of truth — used by every hook that needs to branch on surface.
  */
-function isCmsPath(path: string): boolean {
-  return path === "/cms" || path.startsWith("/cms/");
+function isAdminPath(path: string): boolean {
+  return path === "/admin" || path.startsWith("/admin/");
 }
 
 /**
@@ -271,7 +271,7 @@ function isCmsPath(path: string): boolean {
  * have one (so per-route overrides — e.g. /sitemap.xml, /robots.txt,
  * /api/health — keep their explicit values).
  *
- * - /cms/*           → no-store (authenticated, must always be fresh)
+ * - /admin/*           → no-store (authenticated, must always be fresh)
  * - /api/auth/*      → no-store (auth state)
  * - /api/media/*     → public, max-age=86400, stale-while-revalidate=604800
  *                      (R2 blobs are immutable per id+key, very cacheable)
@@ -291,7 +291,7 @@ const cacheHook: Handle = async ({ event, resolve }) => {
 
   const path = event.url.pathname;
   let value: string;
-  if (path === "/cms" || path.startsWith("/cms/")) {
+  if (path === "/admin" || path.startsWith("/admin/")) {
     value = "no-store";
   } else if (path.startsWith("/api/auth/") || path === "/api/consent") {
     value = "no-store";
@@ -308,6 +308,54 @@ const cacheHook: Handle = async ({ event, resolve }) => {
   return response;
 };
 
+/**
+ * Security headers hook.
+ *
+ * The real threat model on a same-host admin (`/admin` on the same origin
+ * as public content) is stored-XSS in user-generated content exfiltrating
+ * the admin session cookie. HttpOnly on the cookie blocks the primary
+ * `document.cookie` vector; CSP closes off script injection at the source.
+ *
+ * See docs/security.md for the full threat table and rationale.
+ */
+const SECURITY_HEADERS_STATIC: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "X-Frame-Options": "DENY",
+};
+
+const CSP_PUBLIC = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
+const CSP_ADMIN = CSP_PUBLIC;
+
+const securityHeadersHook: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+
+  for (const [name, value] of Object.entries(SECURITY_HEADERS_STATIC)) {
+    if (!response.headers.has(name)) response.headers.set(name, value);
+  }
+
+  if (!response.headers.has("Content-Security-Policy")) {
+    const isAdmin = event.locals.surface === "admin";
+    response.headers.set("Content-Security-Policy", isAdmin ? CSP_ADMIN : CSP_PUBLIC);
+  }
+
+  return response;
+};
+
 export const handle = sequence(
   surfaceHook,
   bindingsHook,
@@ -315,4 +363,5 @@ export const handle = sequence(
   paraglideLocaleHook,
   authHook,
   cacheHook,
+  securityHeadersHook,
 );

@@ -26,7 +26,7 @@ id = "eaa2d962e21c44a585a64fcf497e1e5f"
 # ──────────────────────────────────────
 # Single host, two surfaces (since v1.1):
 #   /            → public site
-#   /cms/*       → admin CMS
+#   /admin/*       → admin CMS
 [vars]
 SUPPORTED_LOCALES = "en,th"
 DEFAULT_LOCALE = "en"

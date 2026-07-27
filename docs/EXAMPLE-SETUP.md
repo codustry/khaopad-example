@@ -80,7 +80,7 @@ git push origin main
 Watch the **Deploy** workflow in the Actions tab. When it finishes:
 
 - Public site: `https://khaopad-example.<your-subdomain>.workers.dev`
-- CMS: same host, but the route group `(cms)` is currently gated by host header — easiest path is to bind both `www` and `cms` subdomains to the worker. See `docs/DEPLOYMENT.md` → "Custom routes" if you want true subdomain split. For the workers.dev demo, all routes are reachable from one host.
+- CMS: same host, but the route group `(admin)` is currently gated by host header — easiest path is to bind both `www` and `cms` subdomains to the worker. See `docs/DEPLOYMENT.md` → "Custom routes" if you want true subdomain split. For the workers.dev demo, all routes are reachable from one host.
 
 ### 6. Create the first admin
 

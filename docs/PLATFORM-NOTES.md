@@ -64,7 +64,7 @@ And access the site via `http://www.khaopad.local:8787` / `http://cms.khaopad.lo
 
 ## 8. SvelteKit route groups don't affect URLs
 
-`src/routes/(www)/` and `src/routes/(cms)/` both serve paths starting at `/`. The parentheses are a SvelteKit convention for "share this layout without adding a URL segment."
+`src/routes/(www)/` and `src/routes/(admin)/` both serve paths starting at `/`. The parentheses are a SvelteKit convention for "share this layout without adding a URL segment."
 
 **Consequence:** `/articles` could theoretically be served by either group. We resolve this with the subdomain hook: CMS routes are blocked on `www`, www-only routes are blocked on `cms`. The hook classification lists (`isCmsRoute`, `isWwwOnlyRoute`) must stay in sync with the folder contents.
 
