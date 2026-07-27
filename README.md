@@ -17,7 +17,7 @@ A content-rich showcase, not a generic placeholder. Read it to see what a finish
 
 This fork carries:
 
-1. **Brand polish on the public surface** (4 files): `(www)/+layout.svelte`, `(www)/[locale]/+page.svelte`, `(www)/[locale]/blog/+page.svelte`, `(www)/[locale]/blog/[slug]/+page.svelte`. Same shadcn admin reskin as upstream — no example-specific changes inside `(cms)/`.
+1. **Brand polish on the public surface** (4 files): `(www)/+layout.svelte`, `(www)/[locale]/+page.svelte`, `(www)/[locale]/blog/+page.svelte`, `(www)/[locale]/blog/[slug]/+page.svelte`. Same shadcn admin reskin as upstream — no example-specific changes inside `(admin)/`.
 2. **Seed content**: the history-of-khao-pad essay series in EN + TH, the categories, tags, and the cover images (in R2).
 3. **Custom i18n keys** for the home and blog intro (`home_eyebrow`, `home_title_a`, `home_title_b`, `home_subtitle`, `home_chip_*`, `blog_subtitle`).
 4. **Wrangler config** points at the example's own D1 / R2 / KV bindings + the `khaopad-example.codustry.workers.dev` route.
@@ -35,7 +35,7 @@ If you want a clean slate with no example-specific copy:
 1. Click **"Use this template"** on [`codustry/khaopad`](https://github.com/codustry/khaopad)
 2. Follow the [Setup section in the upstream README](https://github.com/codustry/khaopad#setup)
 3. Run `pnpm setup` to provision your own D1 / R2 / KV
-4. Sign up at `/cms/signup` — first user becomes `super_admin`, signup then locks
+4. Sign up at `/admin/signup` — first user becomes `super_admin`, signup then locks
 5. Start writing
 
 You get every feature, no demo content to delete.
@@ -55,11 +55,11 @@ pnpm setup
 
 Then in the CMS:
 
-- Sign up your first user at `/cms/signup` (first becomes super_admin, signup then locks)
-- Delete the seed articles via `/cms/articles`
+- Sign up your first user at `/admin/signup` (first becomes super_admin, signup then locks)
+- Delete the seed articles via `/admin/articles`
 - Delete the seed categories + tags
-- Delete the seed media files in R2 (or via `/cms/media`)
-- Update site name + locales in `/cms/settings`
+- Delete the seed media files in R2 (or via `/admin/media`)
+- Update site name + locales in `/admin/settings`
 - Edit the home/blog intro copy in `messages/en.json` + `messages/th.json` (search for `home_*` and `blog_subtitle`)
 
 You keep: the paypers shell, font choices, reading-column layout, and all eleven milestones of features.

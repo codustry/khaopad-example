@@ -114,7 +114,7 @@
 
 <!--
 	v1.8 Cloudflare Web Analytics beacon. Only loads when:
-	- the operator set a token in /cms/settings, AND
+	- the operator set a token in /admin/settings, AND
 	- the visitor opted in to analytics via the cookie banner.
 	The first-party D1 page-view counter runs regardless.
 -->
