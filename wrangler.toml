@@ -7,6 +7,10 @@ assets = { directory = ".svelte-kit/cloudflare", binding = "ASSETS" }
 # ──────────────────────────────────────
 # Cloudflare resources (Codustry account)
 # ──────────────────────────────────────
+# The demo deploys from this top-level config only. Upstream also ships
+# [env.staging] / [env.production] blocks; the example has no staging
+# tier, so they're intentionally omitted rather than carried as dead
+# placeholders that a sync would keep re-conflicting on.
 [[d1_databases]]
 binding = "DB"
 database_name = "khaopad-example-db"
@@ -26,7 +30,7 @@ id = "eaa2d962e21c44a585a64fcf497e1e5f"
 # ──────────────────────────────────────
 # Single host, two surfaces (since v1.1):
 #   /            → public site
-#   /admin/*       → admin CMS
+#   /admin/*     → admin (CMS + shop + all future features under one nav shell)
 [vars]
 SUPPORTED_LOCALES = "en,th"
 DEFAULT_LOCALE = "en"
@@ -35,4 +39,19 @@ PUBLIC_SITE_URL = "https://khaopad-example.codustry.workers.dev"
 CMS_SITE_URL = "https://khaopad-example.codustry.workers.dev"
 BETTER_AUTH_URL = "https://khaopad-example.codustry.workers.dev"
 
-# BETTER_AUTH_SECRET is set as a worker secret (not in this file). See README.
+# Secrets (not in this file — set with `wrangler secret put`):
+#   BETTER_AUTH_SECRET  session signing
+#   CRON_SECRET         guards /api/shop/cron/sweep
+#   DEMO_RESET_SECRET   guards /api/demo/reset
+
+# ──────────────────────────────────────
+# Cron Triggers (v3.2 shop plugin)
+# ──────────────────────────────────────
+# Drives /api/shop/cron/sweep: reservation expiry (15-min TTL),
+# abandoned-cart marking (30-day TTL), and the v3.5 recovery emails.
+#
+# Every 5 minutes rather than every minute: the reservation TTL is 15
+# minutes, so this releases stock fast enough while cutting invocations
+# 5x. The daily entry resets the demo database.
+[triggers]
+crons = ["*/5 * * * *", "0 20 * * *"]

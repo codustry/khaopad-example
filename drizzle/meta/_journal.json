@@ -85,6 +85,48 @@
       "when": 1778060000000,
       "tag": "0011_fts5_external_content",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1785138000000,
+      "tag": "0012_plugin_hello_pings",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1785276000000,
+      "tag": "0013_plugin_shop_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1785318000000,
+      "tag": "0014_plugin_shop_cart_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1785320000000,
+      "tag": "0015_plugin_shop_shipping_tax",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1785330000000,
+      "tag": "0016_analytics_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1785333000000,
+      "tag": "0017_plugin_shop_federation",
+      "breakpoints": true
     }
   ]
 }

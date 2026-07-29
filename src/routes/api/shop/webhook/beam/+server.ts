@@ -1,0 +1,153 @@
+/**
+ * POST /api/shop/webhook/beam — Beam charge status webhook.
+ *
+ * Beam posts here on every charge state transition. We verify the
+ * HMAC-SHA256 signature (constant-time) and dispatch:
+ *   - succeeded → OrderService.markPaid
+ *   - failed → OrderService.markCancelled
+ *   - refunded → recorded via a separate admin-triggered path
+ *   - pending → no-op (initial state)
+ *
+ * Signature header: `X-Beam-Signature`. Never trust the body without
+ * verifying — Beam includes a signature specifically to prevent
+ * spoofed cancellations that would release inventory.
+ */
+import { json } from "@sveltejs/kit";
+import { getPaymentProvider } from "$plugins/shop/payment";
+import { OrderService } from "$plugins/shop/order-service";
+import { sendOrderReceipt } from "$plugins/shop/email";
+import { drizzle } from "drizzle-orm/d1";
+import { and, eq, desc } from "drizzle-orm";
+import { shopCarts, shopOrders } from "$plugins/shop/schema-cart";
+import { track, buildEventContext } from "$lib/server/analytics/track";
+import type { RequestHandler } from "./$types";
+
+export const POST: RequestHandler = async ({ request, platform, url }) => {
+  const env = platform?.env;
+  if (!env) return json({ ok: false, code: "NO_PLATFORM" }, { status: 503 });
+
+  const provider = getPaymentProvider("beam");
+  if (!provider) {
+    return json(
+      { ok: false, code: "PROVIDER_NOT_CONFIGURED" },
+      { status: 503 },
+    );
+  }
+
+  const signature = request.headers.get("x-beam-signature") ?? "";
+  const rawBody = await request.text();
+
+  const verified = await provider.verifyWebhook(rawBody, signature);
+  if (!verified.ok) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[shop.webhook] beam verify failed: ${verified.code} ${verified.message}`,
+    );
+    return json({ ok: false, code: verified.code }, { status: 400 });
+  }
+
+  // Look up order by providerChargeId.
+  const db = drizzle(env.DB);
+  const order = await db
+    .select()
+    .from(shopOrders)
+    .where(eq(shopOrders.providerChargeId, verified.providerChargeId))
+    .limit(1)
+    .get();
+  if (!order) {
+    // Webhook can arrive before attachProviderCharge lands (Beam
+    // async redirect flow, network reorder). Return 5xx so Beam
+    // RETRIES — a 200 here would silently swallow the succeeded
+    // event and leave the order pending forever with the customer
+    // charged. Beam's retry cadence (a few minutes) gives
+    // attachProviderCharge time to land.
+    return json(
+      { ok: false, code: "ORDER_NOT_FOUND_YET" },
+      { status: 503 },
+    );
+  }
+
+  const orderSvc = new OrderService(env.DB);
+  switch (verified.status) {
+    case "succeeded": {
+      const paid = await orderSvc.markPaid({
+        orderId: order.id,
+        providerChargeId: verified.providerChargeId,
+      });
+      // Fire the receipt email. Never awaited-blocking — Beam should
+      // get its 200 fast, and email delivery is best-effort. Silent
+      // no-op when Resend isn't configured.
+      sendOrderReceipt(env, paid).catch(() => {
+        /* email module already logs failures */
+      });
+      // Fire analytics purchase event. Look up the cart that was
+      // ordered to reuse the visitor's session id — otherwise the
+      // funnel (product_view → add_to_cart → begin_checkout →
+      // purchase) can't join by session_id and conversion looks 0.
+      // Also reads the discountCode field which v3.4 federation
+      // repurposes as `attribution:<articleId>` for article →
+      // purchase attribution tracking. Real discountCode ships in
+      // v3.5 with its own table.
+      const cartRow = await drizzle(env.DB)
+        .select({
+          sessionId: shopCarts.sessionId,
+          discountCode: shopCarts.discountCode,
+        })
+        .from(shopCarts)
+        .where(
+          and(
+            eq(shopCarts.email, paid.email),
+            eq(shopCarts.status, "ordered"),
+          ),
+        )
+        .orderBy(desc(shopCarts.updatedAt))
+        .limit(1)
+        .get();
+      const sessionIdForFunnel = cartRow?.sessionId ?? paid.id;
+      let attributedArticleId: string | undefined;
+      if (cartRow?.discountCode?.startsWith("attribution:")) {
+        attributedArticleId = cartRow.discountCode.slice("attribution:".length);
+      }
+      await track(
+        env.DB,
+        "purchase",
+        {
+          orderId: paid.id,
+          orderNumber: paid.orderNumber,
+          totalSatang: paid.totalSatang,
+          itemCount: paid.items.reduce((s, i) => s + i.quantity, 0),
+          ...(attributedArticleId ? { attributedArticleId } : {}),
+        },
+        buildEventContext({
+          url,
+          request,
+          sessionId: sessionIdForFunnel,
+          userId: paid.userId ?? null,
+          locale: "en",
+        }),
+      );
+      break;
+    }
+    case "failed":
+      await orderSvc.markCancelled({ orderId: order.id });
+      break;
+    case "refunded":
+      // Admin-triggered refunds land here as an echo. Marking already-
+      // refunded orders as refunded is idempotent; a Beam-initiated
+      // refund (rare) records a full refund adjustment.
+      if (order.status !== "refunded") {
+        await orderSvc.recordRefund({
+          orderId: order.id,
+          amountSatang: order.totalSatang,
+          reason: "Beam-initiated refund",
+          kind: "refund_full",
+        });
+      }
+      break;
+    case "pending":
+      // No-op — initial state, order was just created.
+      break;
+  }
+
+  return json({ ok: true, orderStatus: verified.status });
+};

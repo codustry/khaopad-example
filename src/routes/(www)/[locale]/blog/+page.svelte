@@ -35,6 +35,38 @@
 		</p>
 	</header>
 
+	<!-- Search form. Plain GET so the URL is shareable and search engines
+	     can't accidentally index a "no results" state through a POST. -->
+	<form method="GET" class="mb-6 flex flex-wrap gap-2" role="search">
+		<input
+			type="search"
+			name="q"
+			value={data.q ?? ''}
+			placeholder={m.blog_search_placeholder()}
+			class="flex-1 min-w-[220px] px-3 py-2 border border-input rounded-md bg-background text-sm"
+		/>
+		<button
+			type="submit"
+			class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:opacity-90"
+		>
+			{m.blog_search_submit()}
+		</button>
+		{#if data.q}
+			<a
+				href={localePath(locale, '/blog')}
+				class="px-4 py-2 border border-border rounded-md text-sm hover:bg-muted"
+			>
+				{m.blog_search_clear()}
+			</a>
+		{/if}
+	</form>
+
+	{#if data.q}
+		<p class="mb-4 text-sm text-muted-foreground">
+			{m.blog_search_results({ count: String(data.articles.items.length), query: data.q })}
+		</p>
+	{/if}
+
 	{#if activeCategoryName || activeTagName}
 		<div
 			class="mb-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-2.5"

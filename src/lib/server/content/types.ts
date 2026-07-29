@@ -661,28 +661,29 @@ export interface SubscriberFilter {
 }
 
 // ─── Webhooks (v2.0d) ────────────────────────────────────
-
-/**
- * Events the dispatcher knows how to fire. Adding a new event here
- * is the first step to wiring it up — handlers live wherever the
- * source-of-truth action runs (article publish, form submit, etc.).
- */
-export type WebhookEvent =
-  | "article.publish"
-  | "article.unpublish"
-  | "article.delete"
-  | "comment.approve"
-  | "form.submit"
-  | "subscriber.confirm";
-
-export const WEBHOOK_EVENTS: WebhookEvent[] = [
-  "article.publish",
-  "article.unpublish",
-  "article.delete",
-  "comment.approve",
-  "form.submit",
-  "subscriber.confirm",
-];
+//
+// Webhook event types + registry moved to `$lib/plugins/webhook-events`
+// so plugin code can `registerWebhookEvent()` from a client-safe
+// module (SvelteKit refuses to import `$lib/server/*` into the client
+// bundle). Re-exported here so existing imports (`from
+// "$lib/server/content/types"`) keep working AND so type usages later
+// in this file (e.g. WebhookRecord.events, ContentProvider methods)
+// still resolve.
+export type {
+  KnownWebhookEvent,
+  WebhookEvent,
+} from "$lib/plugins/webhook-events";
+export {
+  registerWebhookEvent,
+  listKnownWebhookEvents,
+  WEBHOOK_EVENTS,
+} from "$lib/plugins/webhook-events";
+// Local alias so the WebhookEvent identifier resolves in type positions
+// below (declarations in this file's remaining ~150 lines).
+import type { WebhookEvent } from "$lib/plugins/webhook-events";
+// Consumed only for the type-alias — the runtime version is re-exported above.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _WebhookEventTypeUsage = WebhookEvent;
 
 export interface WebhookRecord {
   id: string;
