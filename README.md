@@ -4,6 +4,26 @@ The official live demo of [Khao Pad](https://github.com/codustry/khaopad), the o
 
 🌐 **Live**: [khaopad-example.codustry.workers.dev](https://khaopad-example.codustry.workers.dev)
 
+## Sign in and play
+
+The CMS is open with a demo editor account. Nothing you do can break it — the database resets every night at 03:00 Bangkok time.
+
+| | |
+| --- | --- |
+| **URL** | [khaopad-example.codustry.workers.dev/admin](https://khaopad-example.codustry.workers.dev/admin) |
+| **Email** | `demo@khaopad.dev` |
+| **Password** | `KhaoPadDemo!2026` |
+
+The account is an **editor**: it can write, publish, moderate, and manage the shop catalog, but not change site settings or users — those screens are visible but read-only, so one visitor can't reconfigure the demo for everyone else.
+
+Things worth trying:
+
+- **Write a post** — `/admin/articles/new`, markdown editor with split preview; publish it and it's live on the public blog immediately
+- **Embed a product in an article** — the related-products panel on the article form; the embed renders inline on the public post and attributes any resulting purchase back to that article
+- **Run a checkout** — add something to the cart on the public site and check out. Payments hit BeamCheckout's **sandbox**, so no real charge is ever made. Then watch the order appear at `/admin/shop/orders`
+- **Create a discount code** — `/admin/shop/discounts`, then apply it in the cart
+- **Watch the funnel** — `/admin/dashboard` shows page views, article reads, and the shop funnel from view through purchase
+
 ## What this demo is
 
 A content-rich showcase, not a generic placeholder. Read it to see what a finished Khao Pad site looks like before you commit to the platform.
@@ -11,7 +31,8 @@ A content-rich showcase, not a generic placeholder. Read it to see what a finish
 - **Subject**: a short history of khao pad — Thailand's most ubiquitous dish — told as a 5-essay series across origin, royal kitchens, regional variants, day-old rice, and the modern global diaspora
 - **Bilingual**: every essay published in English and Thai (well, English fully; Thai partial — exactly the editorial reality of most multilingual sites)
 - **Brand polish**: paypers-style visual reskin on the public surface — sticky topbar with a `ข` glyph mark, IBM Plex Sans Thai + Inter Tight typography, radial gradient background, story-led hero, numbered essay-list blog index, generous reading column
-- **All eleven Khao Pad milestones live**: SEO (full meta + JSON-LD + sitemap + RSS), analytics (privacy-friendly D1 page-views), comments (dual-toggle), forms, newsletter (single-opt-in with no provider configured), webhooks, public REST API. Everything you can do upstream is wired up here.
+- **Every plugin active**: the v3.0 plugin runtime is live here with both the `hello` example plugin and the full `shop` plugin enabled, so the sidebar shows the real platform surface rather than a trimmed-down one.
+- **All upstream milestones through v3.5**: SEO (full meta + JSON-LD + sitemap + RSS), analytics (privacy-friendly D1 events + funnel dashboards), comments, forms, newsletter, webhooks, public REST API, and the shop — catalog, cart, Beam checkout, orders, discounts, abandoned-cart recovery.
 
 ## What's different from upstream
 
@@ -62,32 +83,22 @@ Then in the CMS:
 - Update site name + locales in `/admin/settings`
 - Edit the home/blog intro copy in `messages/en.json` + `messages/th.json` (search for `home_*` and `blog_subtitle`)
 
-You keep: the paypers shell, font choices, reading-column layout, and all eleven milestones of features.
+You keep: the paypers shell, font choices, reading-column layout, and every upstream feature through v3.5.
 
 ## Staying in sync with upstream
 
-Khao Pad ships features in numbered milestones. To pull a new release into your fork:
+[`.github/workflows/sync-upstream.yml`](.github/workflows/sync-upstream.yml) runs every Monday and opens a PR whenever `codustry/khaopad@main` has advanced. A human reviews and merges it, so a breaking upstream change never lands silently. You can also trigger it by hand from the Actions tab.
 
-```bash
-git remote add upstream https://github.com/codustry/khaopad.git
-git fetch upstream
+When the merge conflicts, resolve on this rule:
 
-git checkout -b cherry-pick/v2.X
-git checkout upstream/main -- <list of upstream files that changed>
-```
+1. **Upstream wins by default.** Every file outside the list below should take upstream's version — `git checkout --theirs <file>`. Divergence anywhere else is drift, not intent.
+2. **`messages/*.json`**: field-merge new upstream keys — never wholesale-overwrite. The example's own copy (`home_*`, `blog_subtitle`) lives in the same JSON.
+3. **The paypers-reskinned `(www)` files**: keep this repo's shell, then graft in any *new wiring* upstream added (a `<Seo>` mount, a tracker component, a nav iteration change). Diff upstream's new version against upstream's old one to see what's actually new — the raw conflict is mostly formatting drift and will mislead you.
+4. **`wrangler.toml`**: keep this repo's bindings, URLs, and triggers. Upstream's staging/production env blocks are placeholders and are intentionally not carried here.
 
-Two manual rules during the cherry-pick:
+Then apply any new D1 migrations with `pnpm db:migrate:remote` before merging.
 
-1. **`messages/*.json`**: field-merge new upstream keys into your file — never wholesale-overwrite. Your example-specific copy lives in the same JSON.
-2. **The 4 paypers-reskinned files** (the `(www)` svelte files listed above): take upstream's diff against the **upstream** version of the file, and apply only the new wiring (Seo mount, CookieBanner, nav-menu iteration, beacon, etc.) into your existing paypers shell.
-
-Apply any new D1 migrations via `pnpm db:migrate:remote`, then PR into `main`:
-
-```bash
-gh pr create --title "feat(v2.X): cherry-pick upstream PR #N"
-```
-
-The full sync history is in the merged PRs of this repo — every cherry-pick PR's title links back to the upstream PR number.
+> **Known tax:** this fork diverges on route files, so every sync re-conflicts on them. The durable fix is to move the brand polish into theme overrides (CSS variables + i18n keys) so the demo becomes content-and-config only and upstream merges clean. Tracked as a follow-up.
 
 ## Local dev
 
