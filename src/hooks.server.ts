@@ -9,8 +9,10 @@ import {
   validatePlatformEnv,
 } from "$lib/server/config/platform-status";
 import { createContentProvider } from "$lib/server/content";
+import { QueryCache } from "$lib/server/content/query/cache";
 import { localeFromPathname } from "$lib/i18n";
 import { R2MediaService } from "$lib/server/media";
+import { initPlugins } from "$lib/plugins";
 
 /**
  * Surface detection hook.
@@ -64,7 +66,9 @@ const bindingsHook: Handle = async ({ event, resolve }) => {
   }
 
   try {
-    event.locals.content = createContentProvider(env!);
+    // `platform.context` carries the Worker execution context; passing
+    // it lets cache invalidation outlive the response (Phase 1, #68).
+    event.locals.content = createContentProvider(env!, event.platform?.context);
 
     const mediaBaseUrl =
       event.locals.subdomain === "admin"
@@ -74,6 +78,20 @@ const bindingsHook: Handle = async ({ event, resolve }) => {
       env!.DB,
       env!.MEDIA_BUCKET,
       mediaBaseUrl,
+      // Media is a populate target (articles.coverMedia), so a media
+      // write has to drop cached article payloads that embedded it.
+      () => {
+        if (!env!.CONTENT_CACHE) return;
+        const pending = new QueryCache(env!.CONTENT_CACHE).invalidateMany([
+          "media",
+          "articles",
+        ]);
+        if (event.platform?.context?.waitUntil) {
+          event.platform.context.waitUntil(pending);
+        } else {
+          void pending;
+        }
+      },
     );
     event.locals.platformReady = true;
     event.locals.configurationError = null;
@@ -316,7 +334,25 @@ const cacheHook: Handle = async ({ event, resolve }) => {
  * the admin session cookie. HttpOnly on the cookie blocks the primary
  * `document.cookie` vector; CSP closes off script injection at the source.
  *
- * See docs/security.md for the full threat table and rationale.
+ * We ship separate CSP for public and admin surfaces:
+ *
+ * - Public: strict — script-src 'self', no inline scripts, no eval.
+ *   Public HTML never legitimately needs inline JS; a stored-XSS payload
+ *   that would `<script>` under a permissive policy just gets refused.
+ *   `img-src` and `media-src` include `data:` and `blob:` for markdown-
+ *   embedded images/media; `connect-src` allows same-origin fetch for
+ *   comment forms + newsletter subscribe.
+ *
+ * - Admin: relaxed only where the shadcn/svelte-sonner stack needs it
+ *   (inline style attributes from bits-ui components). Scripts still
+ *   locked to 'self'. Admin is authenticated so external content injection
+ *   isn't the same threat class.
+ *
+ * Same-origin defenses beyond CSP:
+ * - `X-Content-Type-Options: nosniff` — kills MIME sniffing attacks
+ * - `Referrer-Policy: strict-origin-when-cross-origin` — narrows leakage
+ * - `Permissions-Policy` — denies sensor/camera/mic access we never use
+ * - HSTS is set by Cloudflare in front of the Worker; not our job
  */
 const SECURITY_HEADERS_STATIC: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
@@ -326,6 +362,20 @@ const SECURITY_HEADERS_STATIC: Record<string, string> = {
 };
 
 const CSP_PUBLIC = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'", // Tailwind emits some inline styles at build; svelte hydration attaches per-component styles
+  "img-src 'self' data: blob: https:", // https: allows R2 CDN + external cover images
+  "media-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
+const CSP_ADMIN = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
@@ -339,8 +389,6 @@ const CSP_PUBLIC = [
   "object-src 'none'",
 ].join("; ");
 
-const CSP_ADMIN = CSP_PUBLIC;
-
 const securityHeadersHook: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
 
@@ -350,9 +398,113 @@ const securityHeadersHook: Handle = async ({ event, resolve }) => {
 
   if (!response.headers.has("Content-Security-Policy")) {
     const isAdmin = event.locals.surface === "admin";
-    response.headers.set("Content-Security-Policy", isAdmin ? CSP_ADMIN : CSP_PUBLIC);
+    response.headers.set(
+      "Content-Security-Policy",
+      isAdmin ? CSP_ADMIN : CSP_PUBLIC,
+    );
   }
 
+  return response;
+};
+
+/**
+ * Plugin init hook.
+ *
+ * Calls each plugin's optional `onInit(ctx)` hook once per Worker
+ * cold start. Most plugins don't need this — sidebar nav / webhook
+ * event registration happens at module load (see
+ * `$lib/plugins/registrations`). `onInit` is reserved for plugins
+ * that need `env` at first-request time (e.g. warming a KV cache,
+ * conditional seeding).
+ *
+ * Idempotent: safe to call from every request; only runs once per
+ * isolate. Skipped when platform is not ready.
+ */
+const pluginInitHook: Handle = async ({ event, resolve }) => {
+  const env = event.platform?.env;
+  if (env && event.locals.platformReady) {
+    await initPlugins({ env });
+  }
+  return resolve(event);
+};
+
+/**
+ * Analytics page_view hook — fires ONCE per public HTML page load.
+ *
+ * Skip conditions (in order of frequency):
+ *   - Non-GET (POST/PATCH/DELETE/etc. — not a page view)
+ *   - Admin surface (/admin/* — internal traffic, not audience metric)
+ *   - API routes (/api/* — data endpoints, not pages)
+ *   - Static asset paths (favicon, sitemap.xml, robots.txt, RSS)
+ *   - Response with Accept header pointing at JSON (SvelteKit client
+ *     navigation prefetch fetches JSON, not HTML)
+ *
+ * Fired AFTER resolve() so the response status is known — a 4xx/5xx
+ * doesn't count as a page view. Fire-and-forget: never blocks the
+ * response.
+ */
+const analyticsPageViewHook: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+  // Late-bind the import so a broken analytics module never breaks
+  // the whole hook chain.
+  try {
+    if (event.request.method !== "GET") return response;
+    if (event.locals.surface === "admin") return response;
+    if (!event.locals.platformReady) return response;
+    const path = event.url.pathname;
+    if (
+      path.startsWith("/api/") ||
+      path.startsWith("/_app/") ||
+      path === "/favicon.png" ||
+      path === "/favicon.ico" ||
+      path === "/robots.txt" ||
+      path.startsWith("/sitemap") ||
+      path.startsWith("/feed")
+    ) {
+      return response;
+    }
+    // SPA client-navigation data fetches — SvelteKit hits
+    // `/<path>/__data.json?...` on every soft nav; if we don't skip
+    // these, every navigation fires TWO page_views (initial SSR + the
+    // subsequent data-only fetch). The `Accept: application/json`
+    // check from the initial commit isn't reliable — SvelteKit sends
+    // default Accept. Filter on the URL shape + on SvelteKit's
+    // `isDataRequest` flag (set by the runtime for internal fetches).
+    if (
+      path.endsWith("/__data.json") ||
+      event.url.searchParams.has("x-sveltekit-invalidated") ||
+      // isDataRequest exists on SvelteKit >=2 for exactly this case
+      (event as unknown as { isDataRequest?: boolean }).isDataRequest === true
+    ) {
+      return response;
+    }
+    // Count only successful renders (2xx). 3xx redirects don't count
+    // as viewed pages — an auth redirect at `/admin` → `/admin/login`
+    // shouldn't inflate homepage view counts. 4xx/5xx errors also
+    // aren't real content-served pages.
+    if (response.status >= 300) return response;
+    const env = event.platform?.env;
+    if (!env) return response;
+    const { track, buildEventContext } =
+      await import("$lib/server/analytics/track");
+    const { ensureCartSession } = await import("$plugins/shop/cart-cookie");
+    const sessionId = ensureCartSession(event.cookies);
+    const localeMatch = /^\/([a-z]{2})\//.exec(path);
+    void track(
+      env.DB,
+      "page_view",
+      { title: undefined },
+      buildEventContext({
+        url: event.url,
+        request: event.request,
+        sessionId,
+        userId: event.locals.user?.id ?? null,
+        locale: localeMatch?.[1] ?? event.locals.locale ?? "en",
+      }),
+    );
+  } catch {
+    /* analytics failure never blocks a request */
+  }
   return response;
 };
 
@@ -360,8 +512,10 @@ export const handle = sequence(
   surfaceHook,
   bindingsHook,
   configurationGuardHook,
+  pluginInitHook,
   paraglideLocaleHook,
   authHook,
   cacheHook,
   securityHeadersHook,
+  analyticsPageViewHook,
 );

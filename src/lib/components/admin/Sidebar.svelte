@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { ChevronLeft, LogOut } from 'lucide-svelte';
 	import { Avatar, Separator } from '$lib/components/ui';
 	import { cn } from '$lib/utils';
-	import { navGroups, type NavItem } from './sidebar-nav';
+	import { listNavGroups, type NavItem } from './sidebar-nav';
 
 	type User = { name: string; role: string };
 
@@ -33,6 +34,11 @@
 
 	const currentPath = $derived(page.url.pathname);
 
+	// Snapshot the registry once per render — plugin boot must complete
+	// before the sidebar mounts, which it does since plugins register
+	// server-side at module load. Re-reading each render is cheap.
+	const groups = $derived(listNavGroups());
+
 	function isActive(href: string) {
 		// Exact match wins; otherwise treat as section root (e.g. /admin/articles
 		// stays active on /admin/articles/new and /admin/articles/[id]).
@@ -59,7 +65,7 @@
 	<!-- Brand row -->
 	<div class="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-3">
 		<a
-			href="/admin/dashboard"
+			href={resolve('/(admin)/admin/dashboard')}
 			class="flex min-w-0 items-center gap-2.5 text-sidebar-foreground"
 			title="Khao Pad"
 		>
@@ -87,7 +93,7 @@
 
 	<!-- Navigation groups -->
 	<nav class="flex-1 overflow-y-auto p-2">
-		{#each navGroups as group, i (group.id)}
+		{#each groups as group, i (group.id)}
 			{@const items = visibleItems(group.items)}
 			{#if items.length > 0}
 				{#if i > 0}
@@ -108,7 +114,7 @@
 						{@const active = isActive(item.href)}
 						<li>
 							<a
-								href={item.href}
+								href={resolve(item.href)}
 								title={collapsed ? item.label() : undefined}
 								class={cn(
 									'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors',
