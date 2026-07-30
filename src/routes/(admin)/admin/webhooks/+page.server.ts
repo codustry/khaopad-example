@@ -1,7 +1,10 @@
 import { error, fail, redirect } from "@sveltejs/kit";
 import { canManageUsers } from "$lib/server/auth/permissions";
 import { logAudit } from "$lib/server/audit";
-import { WEBHOOK_EVENTS, type WebhookEvent } from "$lib/server/content/types";
+import {
+  listKnownWebhookEvents,
+  type WebhookEvent,
+} from "$lib/server/content/types";
 import type { Actions, PageServerLoad } from "./$types";
 
 /**
@@ -18,16 +21,15 @@ export const load: PageServerLoad = async ({ locals }) => {
     throw error(403, "Only admins can manage webhooks.");
   }
   const webhooks = await locals.content.listWebhooks();
-  return { webhooks, knownEvents: WEBHOOK_EVENTS };
+  return { webhooks, knownEvents: listKnownWebhookEvents() };
 };
 
 function parseEvents(form: FormData): WebhookEvent[] {
+  const known = new Set(listKnownWebhookEvents());
   return form
     .getAll("events")
     .map((v) => String(v))
-    .filter((v): v is WebhookEvent =>
-      (WEBHOOK_EVENTS as string[]).includes(v),
-    );
+    .filter((v): v is WebhookEvent => known.has(v));
 }
 
 export const actions: Actions = {
@@ -84,13 +86,10 @@ export const actions: Actions = {
     }
     await locals.content.updateWebhook(id, { label, url, events, enabled });
     if (platform?.env?.DB) {
-      await logAudit(
-        platform.env.DB,
-        locals.user.id,
-        "settings.update",
-        id,
-        { kind: "webhook.update", url },
-      );
+      await logAudit(platform.env.DB, locals.user.id, "settings.update", id, {
+        kind: "webhook.update",
+        url,
+      });
     }
     return { ok: true };
   },
@@ -103,13 +102,9 @@ export const actions: Actions = {
     if (!id) return fail(400, { error: "Missing id" });
     await locals.content.rotateWebhookSecret(id);
     if (platform?.env?.DB) {
-      await logAudit(
-        platform.env.DB,
-        locals.user.id,
-        "settings.update",
-        id,
-        { kind: "webhook.rotate_secret" },
-      );
+      await logAudit(platform.env.DB, locals.user.id, "settings.update", id, {
+        kind: "webhook.rotate_secret",
+      });
     }
     return { ok: true };
   },
@@ -122,13 +117,9 @@ export const actions: Actions = {
     if (!id) return fail(400, { error: "Missing id" });
     await locals.content.deleteWebhook(id);
     if (platform?.env?.DB) {
-      await logAudit(
-        platform.env.DB,
-        locals.user.id,
-        "settings.update",
-        id,
-        { kind: "webhook.delete" },
-      );
+      await logAudit(platform.env.DB, locals.user.id, "settings.update", id, {
+        kind: "webhook.delete",
+      });
     }
     return { ok: true };
   },

@@ -316,10 +316,13 @@ export interface ContentProvider {
   deleteSubscriber(id: string): Promise<void>;
 
   // Form submissions (v2.0a)
-  listFormSubmissions(formId: string, opts?: {
-    status?: FormSubmissionStatus;
-    limit?: number;
-  }): Promise<FormSubmissionRecord[]>;
+  listFormSubmissions(
+    formId: string,
+    opts?: {
+      status?: FormSubmissionStatus;
+      limit?: number;
+    },
+  ): Promise<FormSubmissionRecord[]>;
   getFormSubmission(id: string): Promise<FormSubmissionRecord | null>;
   createFormSubmission(data: {
     formId: string;
@@ -349,7 +352,10 @@ export interface ContentProvider {
   // Navigation (v1.7b)
   listMenus(): Promise<NavigationMenuRecord[]>;
   getMenuByKey(key: string): Promise<NavigationMenuRecord | null>;
-  createMenu(data: { key: string; label: string }): Promise<NavigationMenuRecord>;
+  createMenu(data: {
+    key: string;
+    label: string;
+  }): Promise<NavigationMenuRecord>;
   deleteMenu(id: string): Promise<void>;
   createNavigationItem(
     data: NavigationItemCreateInput,
@@ -401,10 +407,7 @@ export interface ContentProvider {
   /** Returns webhooks with `enabled=true` AND subscribed to `event`. */
   listWebhooksByEvent(event: WebhookEvent): Promise<WebhookRecord[]>;
   createWebhook(data: WebhookCreateInput): Promise<WebhookRecord>;
-  updateWebhook(
-    id: string,
-    data: WebhookUpdateInput,
-  ): Promise<WebhookRecord>;
+  updateWebhook(id: string, data: WebhookUpdateInput): Promise<WebhookRecord>;
   deleteWebhook(id: string): Promise<void>;
   rotateWebhookSecret(id: string): Promise<WebhookRecord>;
   recordWebhookDelivery(data: {
@@ -489,9 +492,30 @@ export interface ContentBlockRecord {
 
 /** A single field in a form definition. */
 export type FormField =
-  | { name: string; kind: "text"; label: string; required?: boolean; placeholder?: string; maxLength?: number }
-  | { name: string; kind: "email"; label: string; required?: boolean; placeholder?: string }
-  | { name: string; kind: "textarea"; label: string; required?: boolean; placeholder?: string; rows?: number; maxLength?: number }
+  | {
+      name: string;
+      kind: "text";
+      label: string;
+      required?: boolean;
+      placeholder?: string;
+      maxLength?: number;
+    }
+  | {
+      name: string;
+      kind: "email";
+      label: string;
+      required?: boolean;
+      placeholder?: string;
+    }
+  | {
+      name: string;
+      kind: "textarea";
+      label: string;
+      required?: boolean;
+      placeholder?: string;
+      rows?: number;
+      maxLength?: number;
+    }
   | { name: string; kind: "checkbox"; label: string; required?: boolean };
 
 export type FormSubmissionStatus = "new" | "read" | "spam" | "archived";
@@ -661,28 +685,29 @@ export interface SubscriberFilter {
 }
 
 // ─── Webhooks (v2.0d) ────────────────────────────────────
-
-/**
- * Events the dispatcher knows how to fire. Adding a new event here
- * is the first step to wiring it up — handlers live wherever the
- * source-of-truth action runs (article publish, form submit, etc.).
- */
-export type WebhookEvent =
-  | "article.publish"
-  | "article.unpublish"
-  | "article.delete"
-  | "comment.approve"
-  | "form.submit"
-  | "subscriber.confirm";
-
-export const WEBHOOK_EVENTS: WebhookEvent[] = [
-  "article.publish",
-  "article.unpublish",
-  "article.delete",
-  "comment.approve",
-  "form.submit",
-  "subscriber.confirm",
-];
+//
+// Webhook event types + registry moved to `$lib/plugins/webhook-events`
+// so plugin code can `registerWebhookEvent()` from a client-safe
+// module (SvelteKit refuses to import `$lib/server/*` into the client
+// bundle). Re-exported here so existing imports (`from
+// "$lib/server/content/types"`) keep working AND so type usages later
+// in this file (e.g. WebhookRecord.events, ContentProvider methods)
+// still resolve.
+export type {
+  KnownWebhookEvent,
+  WebhookEvent,
+} from "$lib/plugins/webhook-events";
+export {
+  registerWebhookEvent,
+  listKnownWebhookEvents,
+  WEBHOOK_EVENTS,
+} from "$lib/plugins/webhook-events";
+// Local alias so the WebhookEvent identifier resolves in type positions
+// below (declarations in this file's remaining ~150 lines).
+import type { WebhookEvent } from "$lib/plugins/webhook-events";
+// Consumed only for the type-alias — the runtime version is re-exported above.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _WebhookEventTypeUsage = WebhookEvent;
 
 export interface WebhookRecord {
   id: string;

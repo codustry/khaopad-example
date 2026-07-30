@@ -1,9 +1,13 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import * as m from '$lib/paraglide/messages';
 	import ArticleForm from '../ArticleForm.svelte';
 	import Sparkline from '$lib/components/analytics/Sparkline.svelte';
+	import RelatedProductsEditor from '$lib/components/admin/RelatedProductsEditor.svelte';
 	import type { ArticleRecord, CategoryRecord, TagRecord } from '$lib/server/content/types';
+
+	type RefKind = 'featured' | 'mentioned' | 'promoted';
 
 	let {
 		data,
@@ -15,6 +19,13 @@
 			tags: TagRecord[];
 			sparkline: Array<{ date: string; count: number }>;
 			totalViews: number;
+			productRefs: Array<{
+				productId: string;
+				refKind: RefKind;
+				productTitle: string | null;
+				productSlug: string | null;
+			}>;
+			productChoices: Array<{ id: string; title: string; slug: string }>;
 		};
 		form: { ok?: boolean; error?: string; status?: ArticleRecord['status'] } | null;
 	} = $props();
@@ -33,7 +44,7 @@
 		<h1 class="text-2xl font-bold">{m.cms_edit_article()}</h1>
 		<div class="flex items-center gap-2">
 			<a
-				href={`/admin/articles/${data.article.id}/history`}
+				href={resolve('/(admin)/admin/articles/[id]/history', { id: data.article.id })}
 				class="px-3 py-1.5 border border-border rounded-md text-sm hover:bg-muted"
 			>
 				{m.cms_history_link()}
@@ -89,4 +100,14 @@
 		categories={data.categories}
 		tags={data.tags}
 	/>
+
+	<div class="mt-8">
+		<RelatedProductsEditor
+			currentRefs={data.productRefs.map((r) => ({
+				productId: r.productId,
+				refKind: r.refKind,
+			}))}
+			productChoices={data.productChoices}
+		/>
+	</div>
 </div>
