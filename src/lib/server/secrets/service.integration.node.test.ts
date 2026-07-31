@@ -238,7 +238,8 @@ describe("status listing (what the admin page receives)", () => {
   });
 
   it("shows the non-sensitive merchant id in full", async () => {
-    // Masking a public identifier just makes it unverifiable.
+    // Masking a public identifier just makes it unverifiable against the
+    // Beam dashboard.
     await setSecret(env, "BEAM_MERCHANT_ID", "codustry-ova1t0", "u");
     const statuses = await listSecretStatus(env);
     const merchant = statuses.find((s) => s.key === "BEAM_MERCHANT_ID")!;
