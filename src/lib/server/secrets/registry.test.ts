@@ -38,8 +38,18 @@ describe("managed secret registry", () => {
     ]);
   });
 
-  it("marks every credential sensitive except the merchant identifier", () => {
-    // A wrong value here means a live key renders in full on the page.
+  it("includes BEAM_MERCHANT_ID — Beam requires it to authenticate", () => {
+    // Beam uses HTTP Basic as base64(merchantId:apiKey), so the merchant
+    // id is the username and a hard requirement, not decoration. I briefly
+    // removed it after concluding from the code that nothing read it;
+    // the code was wrong, not the requirement.
+    expect(isManagedSecret("BEAM_MERCHANT_ID")).toBe(true);
+  });
+
+  it("marks credentials sensitive but the merchant identifier public", () => {
+    // A wrong flag means a live key renders in full on the page. The
+    // merchant id is a public identifier — masking it would only make a
+    // typo harder to spot against the Lighthouse dashboard.
     for (const def of MANAGED_SECRETS) {
       const expected = def.key !== "BEAM_MERCHANT_ID";
       expect(def.sensitive, `${def.key}.sensitive`).toBe(expected);
