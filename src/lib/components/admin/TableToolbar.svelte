@@ -119,7 +119,7 @@
 				oninput={onSearchInput}
 				placeholder={searchPlaceholder ?? m.admin_search()}
 				aria-label={searchPlaceholder ?? m.admin_search()}
-				class="h-11 w-full rounded-md border border-input bg-background pl-9 pr-9 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9 sm:text-sm"
+				class="search-input h-11 w-full rounded-md border border-input bg-background pl-9 pr-9 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9 sm:text-sm"
 			/>
 			{#if searchValue}
 				<button
@@ -152,3 +152,19 @@
 		{#if extra}{@render extra()}{/if}
 	</div>
 {/if}
+
+<style>
+	/*
+	 * Chrome/Safari render their own clear "X" inside `type="search"`,
+	 * which sat beside ours — two clear buttons, one of them not
+	 * keyboard-reachable and neither obviously authoritative.
+	 *
+	 * Ours stays because the native one is unstyleable, absent in
+	 * Firefox, and cannot carry a translated `aria-label`.
+	 */
+	.search-input::-webkit-search-cancel-button,
+	.search-input::-webkit-search-decoration {
+		-webkit-appearance: none;
+		appearance: none;
+	}
+</style>
