@@ -28,6 +28,9 @@ id = "eaa2d962e21c44a585a64fcf497e1e5f"
 #   /            → public site
 #   /admin/*       → admin CMS
 [vars]
+# Drives robots.txt and the X-Robots-Tag header. Anything except
+# "production" (including unset) is noindexed — fail-closed (#145).
+WORKERS_ENV = "production"
 SUPPORTED_LOCALES = "en,th"
 DEFAULT_LOCALE = "en"
 PUBLIC_SITE_URL = "https://khaopad-example.codustry.workers.dev"
