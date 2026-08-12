@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply khaopad-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply khaopad-db --remote",
+    "db:migrate:remote": "wrangler d1 migrations apply khaopad-example-db --remote",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:example": "tsx scripts/seed-example.ts",
     "setup": "tsx scripts/setup.ts",
