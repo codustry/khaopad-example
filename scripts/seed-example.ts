@@ -263,7 +263,10 @@ for (const a of articles) {
 
 const sql = lines.join("\n") + "\n";
 
-const outDir = join(process.cwd(), "drizzle");
+// NOT drizzle/ — the integration test harness replays every *.sql in
+// the migrations directory, so generated seed SQL dropped there is
+// applied as if it were a migration.
+const outDir = join(process.cwd(), ".seed");
 mkdirSync(outDir, { recursive: true });
 const outFile = join(outDir, "seed-example.sql");
 writeFileSync(outFile, sql);
