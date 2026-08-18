@@ -30,6 +30,8 @@ import reviews from "$plugins/reviews";
 // of $lib/components/admin/sidebar-nav, so it cannot participate in the
 // barrel-export/TDZ cycle documented there.
 import careers from "$plugins/careers";
+// Deployment chrome (fork-side): registers the custom homepage.
+import "$lib/deployment/chrome";
 
 // Silence unused-import warnings — the import is the point (side effects).
 export const _pluginModules = [hello, shop, reviews, careers];
