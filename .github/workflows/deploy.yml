@@ -1,31 +1,44 @@
-name: Deploy
+name: Deploy to Cloudflare Workers
 
-# Single deploy on push to main. No env split, no D1 migration step —
-# migrations and seeds are applied out-of-band so this workflow only needs
-# the org's CLOUDFLARE_API_TOKEN scoped to Workers Scripts (the default).
+# Reference deploy pipeline: CI gates (check / lint / build), then apply
+# pending D1 migrations for the chosen env, deploy the Worker, and probe
+# the public URL as a smoke test.
+
+# ⚠ DISABLED on push. This repo is the ENGINE, not a deployment — its
+# wrangler.toml ids are placeholders and no `khaopad-db` exists. Engine
+# work reaches production by syncing to codustry/khaopad-example, which
+# owns the real bindings and deploys itself.
 #
-# If you need staging or per-env stacks, see codustry/khaopad upstream's
-# multi-env deploy.yml for a template.
-
+# Kept (dispatch-only) rather than deleted because it is the reference
+# pipeline anyone scaffolding their own install will copy, and because
+# the gate job is useful to run by hand. Every push-triggered run before
+# this failed at the Cloudflare step by design, which was noise.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-
-permissions:
-  contents: read
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [staging, production]
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  # ──────────────────────────────────────
+  # Gate: same checks as ci.yml. If these fail, nothing deploys.
+  # ──────────────────────────────────────
+  gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
-        with: { version: 9 }
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -33,14 +46,208 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Compile Paraglide
-        run: npx paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
+      - name: Compile Paraglide messages
+        run: pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
+
+      - name: Type-check
+        run: pnpm run check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Build
+        run: pnpm run build
+
+  # ──────────────────────────────────────
+  # Resolve which environment this run targets. Dispatch-only now, so the
+  # input decides; the push/tag branches below are retained for anyone who
+  # re-enables those triggers on their own fork.
+  # ──────────────────────────────────────
+  resolve-env:
+    runs-on: ubuntu-latest
+    needs: gate
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+      public_url: ${{ steps.pick.outputs.public_url }}
+      d1_name: ${{ steps.pick.outputs.d1_name }}
+    steps:
+      # Needed so the step below can read the D1 name out of wrangler.toml.
+      - uses: actions/checkout@v4
+
+      - id: pick
+        env:
+          STAGING_URL: ${{ vars.STAGING_PUBLIC_URL }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            ENV="production"
+          else
+            ENV="staging"
+          fi
+          if [[ "$ENV" == "production" ]]; then
+            URL="${PRODUCTION_URL:-}"
+          else
+            URL="${STAGING_URL:-}"
+          fi
+          # D1 name is read from wrangler.toml rather than hardcoded, so the
+          # two can never drift apart again. `wrangler d1 migrations apply`
+          # resolves the name inside the selected env, so passing the
+          # top-level default name with `--env staging` fails outright.
+          D1_NAME=$(
+            awk -v env="$ENV" '
+              $0 ~ "^\\[\\[env\\." env "\\.d1_databases\\]\\]" { inblock=1; next }
+              inblock && /^\[/ { inblock=0 }
+              inblock && /^database_name/ {
+                gsub(/^database_name[[:space:]]*=[[:space:]]*"|"$/, ""); print; exit
+              }
+            ' wrangler.toml
+          )
+          if [[ -z "$D1_NAME" ]]; then
+            echo "::error::No d1_databases entry found for env '$ENV' in wrangler.toml" >&2
+            exit 1
+          fi
+          echo "environment=$ENV" >> "$GITHUB_OUTPUT"
+          echo "public_url=$URL" >> "$GITHUB_OUTPUT"
+          echo "d1_name=$D1_NAME" >> "$GITHUB_OUTPUT"
+          echo "→ deploying to: $ENV (db: $D1_NAME, url: ${URL:-<unset>})"
+
+  # ──────────────────────────────────────
+  # Deploy: migrate D1, then deploy the Worker.
+  # GitHub Environment protections (required reviewers, wait timers) attach
+  # to `environment:` below — configure them under repo Settings → Environments.
+  # ──────────────────────────────────────
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [gate, resolve-env]
+    environment:
+      name: ${{ needs.resolve-env.outputs.environment }}
+      url: ${{ needs.resolve-env.outputs.public_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Each GitHub job gets a FRESH runner, so the gate job's compile
+      # output does not carry over — and src/lib/paraglide is gitignored.
+      # Without this, `pnpm build` here fails on missing imports from
+      # $lib/paraglide/messages. Reported in #51; still live until now.
+      - name: Compile Paraglide messages
+        run: pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
 
       - run: pnpm build
 
-      - name: Deploy to Cloudflare Workers
+      # ⚠ Requires a token with `D1 — Edit`, which the conventional
+      # org-wide CLOUDFLARE_API_TOKEN does NOT have: that token is created
+      # from the "Edit Cloudflare Workers" template, granting only
+      # `Workers Scripts — Edit`. The symptom is a 7403 on THIS step while
+      # the deploy step against the same account succeeds, and the error
+      # text never mentions permissions — see #51, which diagnosed it.
+      #
+      # Opt-in so a fork is not blocked by a token it cannot change:
+      # set the repo variable RUN_D1_MIGRATIONS=true once your token has
+      # D1 — Edit. Otherwise apply migrations out of band:
+      #
+      #   npx wrangler d1 migrations apply <db> --remote --env <env>
+      - name: Apply D1 migrations (${{ needs.resolve-env.outputs.environment }})
+        if: vars.RUN_D1_MIGRATIONS == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          # The DB name must come from the SELECTED env in wrangler.toml,
+          # not the top-level default — wrangler resolves the name within
+          # the chosen env and errors otherwise. Reading it from the file
+          # keeps workflow and config from drifting apart.
+          command: d1 migrations apply ${{ needs.resolve-env.outputs.d1_name }} --remote --env ${{ needs.resolve-env.outputs.environment }}
+
+      - name: Deploy Worker (${{ needs.resolve-env.outputs.environment }})
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env ${{ needs.resolve-env.outputs.environment }}
+
+  # ──────────────────────────────────────
+  # Smoke test: hit the public URL and make sure it responds.
+  # Skipped (with a warning) if the environment URL var isn't set yet.
+  # ──────────────────────────────────────
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: [resolve-env, deploy]
+    steps:
+      - name: Probe public URL
+        env:
+          URL: ${{ needs.resolve-env.outputs.public_url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${URL}" ]]; then
+            echo "::warning::Public URL not set for ${{ needs.resolve-env.outputs.environment }}; skipping smoke test."
+            echo "Set STAGING_PUBLIC_URL / PRODUCTION_PUBLIC_URL under repo Settings → Variables to enable."
+            exit 0
+          fi
+          echo "Probing $URL ..."
+          # Retry for up to ~60s — Worker propagation is fast but not instant.
+          #
+          # 503 is accepted because it is Khao Pad's own "configuration
+          # required" screen: the Worker IS running, just pointed at
+          # unconfigured bindings. That is the correct reading for a fresh
+          # fork before secrets are set.
+          #
+          # A 500 is NOT accepted, and is not retried into a timeout. A
+          # module-init crash returns 500 on every route forever, so
+          # retrying it just delays the failure by a minute and buries the
+          # cause. This distinction matters: a nav-registry init bug once
+          # shipped green through check, build AND deploy, and stayed live
+          # because the only runtime signal was treated as retryable.
+          final=""
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || echo "000")
+            echo "  attempt $i → HTTP $code"
+            final="$code"
+            if [[ "$code" =~ ^(2|3)..$ ]] || [[ "$code" == "503" ]]; then
+              echo "✔ Worker responded ($code)"
+              exit 0
+            fi
+            # Fail immediately on a hard server error — it will not heal.
+            if [[ "$code" =~ ^5..$ ]] && [[ "$code" != "503" ]]; then
+              echo "::error::$URL returned HTTP $code — the Worker is deployed but throwing."
+              echo "A 5xx other than 503 usually means an exception during module"
+              echo "initialization or request handling. Check: npx wrangler tail"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Smoke test failed — $URL never returned a healthy status (last: HTTP ${final})."
+          exit 1
+
+      # Step 0 of the theme/engine split (#174). The probe above proves the
+      # Worker RESPONDS; this proves it responds with a page that will render.
+      # Both failures that motivated #174 returned HTTP 200 the whole time:
+      # dropped font <link>s, and a product page left invisible at opacity 0.
+      # A status-code check cannot see either.
+      - name: Guard — rendered <head> (silent render regressions)
+        env:
+          URL: ${{ needs.resolve-env.outputs.public_url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${URL}" ]]; then
+            echo "::warning::Public URL not set; skipping head guard."
+            exit 0
+          fi
+          node scripts/head-guard.mjs --base "$URL"
+          exit 1
