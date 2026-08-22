@@ -71,6 +71,9 @@ export default defineConfig(
       // Same again for shared www-surface components (HeaderSearch):
       // locale-prefixed search URLs built at runtime.
       "src/lib/components/www/**/*.svelte",
+      // Deployment chrome (theme contract): the demo's own header/home
+      // build locale-prefixed runtime hrefs, same as the (www) routes.
+      "src/lib/deployment/**/*.svelte",
     ],
     rules: {
       "svelte/no-navigation-without-resolve": "off",
